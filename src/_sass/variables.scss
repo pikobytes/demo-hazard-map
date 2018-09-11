@@ -1,1 +1,16 @@
+/*
+ * Variables for frontend design
+ * -----------------------------------------------
+ */
+
+// responsive Breakpoints
+$break-point-xs: 500px;
+$break-point-sm: 768px;
+$break-point-md: 1024px;
+$break-point-lg: 1200px;
+
+// Colors
+$baseBlue: rgb(51,128,182);
+$baseLightBlue: lighten($baseBlue, 10%);
+$baseDarkBlue: desaturate(darken($baseBlue, 25%),12%);
 $lightGrey: rgb(225,225,225);

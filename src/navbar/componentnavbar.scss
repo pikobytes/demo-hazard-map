@@ -1,0 +1,33 @@
+@import "../_sass/mixins.scss";
+
+.osw-navbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 85px;
+  z-index: 2022;
+  background: rgba(255, 255, 255, 0.9);
+
+  h1 {
+    position: relative;
+    width: 230px;
+    height: 60px;
+    display: block;
+    @include text-hide();
+    background: url(../_images/pikobytesLogo.svg) no-repeat center center;
+    background-size: 100% auto;
+  }
+
+  .navbar-end {
+    padding-right: 20px;
+  }
+
+  .navbar-item {
+    font-size: 1.2rem;
+    &:hover {
+      background: none;
+      font-size: 1.4rem;
+    }
+  }
+}

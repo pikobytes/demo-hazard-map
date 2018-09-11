@@ -1,0 +1,140 @@
+@import "./font.scss";
+@import "./mixins.scss";
+@import "./variables.scss";
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Open Sans', Helvetica, Verdana, sans-serif;
+  font-weight: 400;
+  font-display: optional;
+  color: #444;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
+  -webkit-align-content: stretch;
+  -ms-flex-line-pack: stretch;
+  align-content: stretch;
+  background: #ececec;
+  -ms-content-zooming: none;
+  overflow: hidden;
+
+}
+
+body {
+  @media screen and (max-width: $break-point-sm) {
+    overflow-x: hidden;
+  }
+  ul.list-style-none {
+    padding: 0;
+  }
+  .list-style-none > li, .list-style-none {
+    display: table;
+    list-style-type: none;
+  }
+}
+
+.hide {
+  display: none;
+}
+
+.no-script {
+  padding: 10px;
+}
+
+.no-button {
+  border:none !important;
+  background-color: transparent !important;
+}
+
+.smooth-transition {
+  @include transition(all 0.5s ease-out);
+}
+
+.visible-only-xs {
+  @media screen and (min-width: $break-point-sm) {
+    display: none;
+  }
+}
+
+.visible-only-lg {
+  @media screen and (max-width: $break-point-sm) {
+    display: none;
+  }
+}
+
+//
+// Defines a flash animation
+//
+.animation-flash {
+  @include transition(background 0.5s ease-out);
+}
+.animation-flash-enter-active {
+  background-color: $baseLightBlue;
+}
+
+.button-osw {
+  color: black;
+}
+
+//
+// Define animation for smooth changing of display
+//
+@keyframes show {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.modal-background {
+  background-color: rgba(10, 10, 10, 0.76);
+}
+
+//
+// Overwrite some Bulma styling
+// (maybe it should be later moved from this file to an external one)
+//
+a {
+  color: $baseBlue;
+  .no-touch & {
+    &:hover {
+      color: $baseDarkBlue;
+      background-color: transparent;
+    }
+  }
+}

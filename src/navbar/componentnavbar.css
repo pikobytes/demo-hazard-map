@@ -1,0 +1,31 @@
+/*
+ * Basic mixins for multiple use in SCSS files
+ * -----------------------------------------------
+ */
+.osw-navbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 85px;
+  z-index: 2022;
+  background: rgba(255, 255, 255, 0.9); }
+  .osw-navbar h1 {
+    position: relative;
+    width: 230px;
+    height: 60px;
+    display: block;
+    font: 0/0 a;
+    color: transparent;
+    text-shadow: none;
+    background-color: transparent;
+    border: 0;
+    background: url(../_images/pikobytesLogo.svg) no-repeat center center;
+    background-size: 100% auto; }
+  .osw-navbar .navbar-end {
+    padding-right: 20px; }
+  .osw-navbar .navbar-item {
+    font-size: 1.2rem; }
+    .osw-navbar .navbar-item:hover {
+      background: none;
+      font-size: 1.4rem; }

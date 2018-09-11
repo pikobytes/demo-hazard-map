@@ -9,6 +9,8 @@ import { combineReducers, createStore } from 'redux';
 import { createHashHistory } from 'history';
 import { detect } from 'detect-browser';
 
+import '../node_modules/bulma/css/bulma.css';
+import './_sass/global.css';
 import './index.css';
 import App from './componentapp';
 

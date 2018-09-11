@@ -1,10 +1,11 @@
 @import "./_sass/variables.scss";
 
-.container.template-app {
+.hazard-app {
   background: #fff;
-  margin-top: 100px;
-  margin-bottom: 60px;
-  padding: 30px 30px 60px 30px;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  position: absolute;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 
   .copyright {
