@@ -1,0 +1,58 @@
+{
+  "name": "demo-hazard-map",
+  "version": "1.0.0",
+  "description": "Template web application based on create-react-app",
+  "main": "script.js",
+  "scripts": {
+    "startHttp": "http-server ./ -a 0.0.0.0 -p 8000 --cors",
+    "build-css": "node-sass-chokidar src/ -o src/",
+    "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
+    "start-js": "react-scripts start",
+    "start": "npm-run-all -p watch-css start-js",
+    "start-build": "http-server ./build/ -a 0.0.0.0 -p 3001 --cors -S -C '.ssl/cert.pem' -K '.ssl/key.pem'",
+    "build-js": "react-scripts build",
+    "build": "npm-run-all build-css build-js",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pikobytes/harvester-monitor-client.git"
+  },
+  "author": "Jacob Mendt <jacob.mendt@pikobytes.de>",
+  "bugs": {
+    "url": "https://github.com/pikobytes/harvester-monitor-client/issues"
+  },
+  "homepage": "https://github.com/pikobytes/harvester-monitor-client#readme",
+  "devDependencies": {
+    "babel-eslint": "^7.2.3",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
+    "eslint": "^4.16.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.5.1",
+    "http-server": "^0.11.1",
+    "node-sass-chokidar": "0.0.3",
+    "npm-run-all": "^4.1.2",
+    "redux-mock-store": "^1.5.1"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bulma": "^0.7.1",
+    "detect-browser": "^2.0.0",
+    "history": "^4.7.2",
+    "immutable": "^3.8.2",
+    "prop-types": "^15.6.1",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "react-redux": "^5.0.7",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
+    "react-router-redux": "^4.0.8",
+    "react-scripts": "1.1.4",
+    "react-url-query": "^1.4.0",
+    "redux": "^4.00"
+  }
+}

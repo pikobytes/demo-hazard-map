@@ -1,0 +1,13 @@
+@import "./_sass/variables.scss";
+
+.container.template-app {
+  background: #fff;
+  margin-top: 100px;
+  margin-bottom: 60px;
+  padding: 30px 30px 60px 30px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+
+  .copyright {
+    color: darken($lightGrey, 30%);
+  }
+}

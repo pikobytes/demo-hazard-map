@@ -1,0 +1,52 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "arrow-body-style": ["warn"],
+    "class-methods-use-this": ["error",
+      {
+        "exceptMethods": [
+          "shouldComponentUpdate",
+          "render"
+        ]
+      }
+    ],
+    "func-names": ["error", "never"],
+    "function-paren-newline": ["off"],
+    "import/no-named-as-default": ["off"],
+    "no-nested-ternary": ["off"],
+    "no-plusplus": ["off"],
+    "no-underscore-dangle": ["off"],
+    "no-unused-vars": ["off"],
+    "no-use-before-define": ["off"],
+    "object-shorthand": ["off"],
+    "object-curly-newline": ["off"],
+    "import/prefer-default-export": ["off"],
+    "prefer-destructuring": ["off"],
+    "indent": [ "error", 2, { "SwitchCase": 1 } ],
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "max-len": ["error", { "code": 140, "tabWidth": 4 }]
+  },
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jasmine": true
+  },
+  "globals": {
+    "describe": true,
+    "HttpError": true,
+    "it": true,
+    "module": true,
+    "moment": true,
+    "require": true
+  },
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true,
+      "modules": true,
+      "experimentalObjectRestSpread": true
+    }
+  }
+}
