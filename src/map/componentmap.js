@@ -1,111 +1,117 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import PropTypes from 'prop-types';
-import mapboxgl from 'mapbox-gl';
+import bind from 'lodash.bind';
+import isUndefined from 'lodash.isundefined';
+import partial from 'lodash.partial';
 import uniqueId from 'lodash.uniqueid';
-import './componentmap.css';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
+import { List } from 'immutable';
+import WebMercatorViewport from 'viewport-mercator-project';
 
-/**
- * Map container component
- */
+import './componentmap.css';
+import SVGOverlay from './svg-overlay';
+import { fetchEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
+import Loading from '../loading/componentloading';
+
 export default class Map extends Component {
   static propTypes = {
-    mapView: PropTypes.shape({
-      center: PropTypes.arrayOf(
-        PropTypes.number,
-      ),
-      zoom: PropTypes.number,
-    }).isRequired,
-    mapParams: PropTypes.shape({
-      maxZoom: PropTypes.number,
-      minZoom: PropTypes.number,
-    }).isRequired,
     styleUrl: PropTypes.string.isRequired,
     token: PropTypes.string.isRequired,
-    // onDeleteMap: PropTypes.func,
-    // onInitialMapLoad: PropTypes.func,
-    // onViewUpdate: PropTypes.func,
   };
 
-  /**
-   * @param {?} props
-   */
   constructor(props) {
     super(props);
 
-    /**
-     * @type {string}
-     * @private
-     */
-    this.containerId_ = `osw-mapboxgl-map-${uniqueId()}`;
-
-    /**
-     * @type {mapboxgl.Map|undefined}
-     * @private
-     */
-    this.map_ = undefined;
+    this.state = {
+      dataEA: new List([]),
+      dataEALoading: false,
+      mapStyle: props.styleUrl,
+      popup: undefined,
+      token: props.token,
+      viewport: {
+        latitude: 1.0177774980683254,
+        longitude: 10.903720605862574,
+        zoom: 1,
+        bearing: -5.451772765941094,
+        pitch: 41.02174132780428,
+      },
+    };
   }
 
   componentDidMount() {
-    const { mapParams, mapView, styleUrl, token } = this.props;
-    const { minZoom, maxZoom } = mapParams;
-    const { center, zoom } = mapView;
+    // fetch earth quake data
+    fetchEarthQuakeData(
+      process.env.REACT_APP_DATA_EARTHQUAKES,
+      {
+        onLoadingStart: bind(() => this.setState({ dataEALoading: true }), this),
+        onLoadingEnd: bind(() => this.setState({ dataEALoading: false }), this),
+        onSuccess: bind((d) => {
+          this.setState({ dataEALoading: false, dataEA: d });
+        }, this),
+      },
+    );
+  }
 
-    // set the mapbox access token
-    mapboxgl.accessToken = token;
-
-    const map = new mapboxgl.Map({
-      minZoom: minZoom,
-      maxZoom: maxZoom,
-      center: [center[0], center[1]],
-      container: this.containerId_,
-      style: styleUrl,
-      zoom: zoom,
-    });
-
-    // bind listener for dispatching map interactions to the global application state
-    // map.on('moveend', partial(this.props.onViewUpdate, map));
-    // map.on('load', partial(this.props.onViewUpdate, map));
-
-    // deactivate zooming on double clickCluster
-    map.doubleClickZoom.disable();
-
-    // Add zoom, rotation and copy to clipboard control to the map.
-    map.addControl(new mapboxgl.NavigationControl());
-
-    // The SearchLayer and the SpatialLayer do not support bearing (rotation) and
-    // pitching yet. So we deactivate this interactions for the user.
-    // disable map rotation using right clickCluster + drag
-    map.dragRotate.disable();
-    // disable map rotation using touch rotation gesture
-    map.touchZoomRotate.disableRotation();
-
-    // in case debug mode is active display a scalebar
-    map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
-
-
-    // dispatches an action which signals that the loading of the map was finished.
-    // map.once('load', bind(({ target }) => {
-    //   this.props.onInitialMapLoad(target);
-    // }, this));
-
-    this.map_ = map;
+  /**
+   * Function for updating the viewport
+   * @param viewport
+   */
+  onViewportChange(viewport) {
+    this.setState({ viewport });
   }
 
   /**
    * Renders the component
    */
   render() {
-    return <div className="osw-map" aria-label="main navigation">
-      <div id={this.containerId_}
-        className="osw-mapboxgl-map"
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-        }}
-      />
+    const { dataEALoading, dataEA, mapStyle, popup, token } = this.state;
+    const viewport = {
+      mapStyle,
+      ...this.state.viewport,
+      ...this.props,
+    };
+    return <div className="osw-map">
+      {
+        dataEALoading &&
+        <div className="loading-container">
+          <Loading radius={50}/>
+        </div>
+      }
+      <InteractiveMap
+        { ...viewport }
+        mapboxApiAccessToken={token}
+        maxPitch={85}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        onViewportChange={this.onViewportChange.bind(this)}
+        // setting to `true` should cause the map to flicker because all sources
+        // and layers need to be reloaded without diffing enabled.
+        preventStyleDiffing={ false }>
+        <SVGOverlay
+          redraw={
+            partial(
+              redrawEarthquakes,
+              '.osw-map',
+              dataEA,
+              {
+                onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3] } }), this),
+              },
+            )
+          }
+          captureClick={true} />
+        <div style={{ position: 'absolute', right: 10, top: 100 }}>
+          <NavigationControl onViewportChange={this.onViewportChange.bind(this)} />
+        </div>
+        {
+          !isUndefined(popup) &&
+          <Popup latitude={popup.lat} longitude={popup.lon} closeButton={true} closeOnClick={false} anchor="top"
+            onClose={bind(() => this.setState({ popup: undefined }), this)}>
+            <div>{popup.text}</div>
+          </Popup>
+        }
+      </InteractiveMap>
     </div>;
   }
 }
