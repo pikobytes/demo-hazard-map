@@ -25,3 +25,10 @@
     color: rgba(255, 255, 255, 0.9); }
   .osw-map .mapboxgl-popup .mapboxgl-popup-content {
     background: rgba(255, 255, 255, 0.9); }
+  .osw-map .datetime-slider-container {
+    width: 100%;
+    height: 150px;
+    z-index: 100;
+    position: absolute;
+    bottom: 30px;
+    text-align: center; }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import axios from 'axios';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import bind from 'lodash.bind';
 import isUndefined from 'lodash.isundefined';
@@ -8,11 +8,15 @@ import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { List } from 'immutable';
-import WebMercatorViewport from 'viewport-mercator-project';
 
 import './componentmap.css';
+import DateTimeSlider from './componentdatetimeslider';
 import SVGOverlay from './svg-overlay';
-import { fetchEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
+import {
+  getAirportsAffectedByEarthquakes,
+} from './analysis'
+import { fetchAirportData } from './layer-airports';
+import { fetchEarthQuakeData, filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
 import Loading from '../loading/componentloading';
 
 export default class Map extends Component {
@@ -25,17 +29,22 @@ export default class Map extends Component {
     super(props);
 
     this.state = {
+      dataAirports: new List([]),
+      dataAirportsLoading: false,
       dataEA: new List([]),
+      dataEAFiltered: new List([]),
       dataEALoading: false,
+      dateTime: moment(),
+      dateTimeExtent: [moment().subtract('days', 30), moment()],
       mapStyle: props.styleUrl,
       popup: undefined,
       token: props.token,
       viewport: {
-        latitude: 1.0177774980683254,
-        longitude: 10.903720605862574,
+        latitude: 5.088887490341627,
+        longitude: 13.651812424861578,
         zoom: 1,
-        bearing: -5.451772765941094,
-        pitch: 41.02174132780428,
+        bearing: 0,
+        pitch: 0,
       },
     };
   }
@@ -48,10 +57,35 @@ export default class Map extends Component {
         onLoadingStart: bind(() => this.setState({ dataEALoading: true }), this),
         onLoadingEnd: bind(() => this.setState({ dataEALoading: false }), this),
         onSuccess: bind((d) => {
-          this.setState({ dataEALoading: false, dataEA: d });
+          const { dateTime } = this.state;
+          this.setState({ dataEALoading: false, dataEA: d, dataEAFiltered: filterEarthQuakeData(dateTime, d) });
         }, this),
       },
     );
+    // fetch airport data
+    fetchAirportData(
+      process.env.REACT_APP_DATA_AIRPORTS,
+      {
+        onLoadingStart: bind(() => this.setState({ dataAirportsLoading: true }), this),
+        onLoadingEnd: bind(() => this.setState({ dataAirportsLoading: false }), this),
+        onSuccess: bind((d) => {
+          this.setState({ dataAirportsLoading: false, dataAirports: d });
+        }, this),
+      },
+    );
+  }
+
+  /**
+   * Update the dateTime. This leads also to an update of the date.
+   * @param {moment} dateTime
+   */
+  onDateTimeChange(dateTime) {
+    const { dataEA } = this.state;
+    // update state
+    this.setState({
+      dataEAFiltered: filterEarthQuakeData(dateTime, dataEA),
+      dateTime: dateTime,
+    });
   }
 
   /**
@@ -66,12 +100,18 @@ export default class Map extends Component {
    * Renders the component
    */
   render() {
-    const { dataEALoading, dataEA, mapStyle, popup, token } = this.state;
+    const { dataEALoading, dataEAFiltered, dataAirports, dateTime, dateTimeExtent, mapStyle, popup, token } = this.state;
     const viewport = {
       mapStyle,
       ...this.state.viewport,
       ...this.props,
     };
+
+    // perform analysis
+    // if (dataEA.size > 0 && dataAirports.size > 0) {
+    //   getAirportsAffectedByEarthquakes(dataEA.toJS(), dataAirports.toJS());
+    // }
+
     return <div className="osw-map">
       {
         dataEALoading &&
@@ -94,24 +134,34 @@ export default class Map extends Component {
             partial(
               redrawEarthquakes,
               '.osw-map',
-              dataEA,
+              dataEAFiltered,
               {
-                onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3] } }), this),
+                onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),
               },
             )
           }
           captureClick={true} />
+
         <div style={{ position: 'absolute', right: 10, top: 100 }}>
           <NavigationControl onViewportChange={this.onViewportChange.bind(this)} />
         </div>
+
         {
           !isUndefined(popup) &&
           <Popup latitude={popup.lat} longitude={popup.lon} closeButton={true} closeOnClick={false} anchor="top"
             onClose={bind(() => this.setState({ popup: undefined }), this)}>
-            <div>{popup.text}</div>
+            <div>{popup.date.format('MMM DD')}: {popup.text}</div>
           </Popup>
         }
       </InteractiveMap>
+
+      <div className="datetime-slider-container">
+        <DateTimeSlider style={{ width: 800, height: 150 }}
+          dateTime={dateTime}
+          onDateTimeChange={this.onDateTimeChange.bind(this)}
+          timeExtent={dateTimeExtent}
+        />
+      </div>
     </div>;
   }
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import moment from 'moment';
 import { easeBounceIn, easeLinear } from 'd3-ease';
 import 'd3-transition';
 import { select as d3Select } from 'd3-selection';
@@ -41,7 +42,7 @@ export function fetchEarthQuakeData(url, {
       // parse the data
       const features = data.features.map(({ geometry, properties }) => {
         const { coordinates } = geometry;
-        return [coordinates[0], coordinates[1], properties.mag, properties.title];
+        return [coordinates[0], coordinates[1], properties.mag, properties.title, properties.time];
       });
       onSuccess(fromJS(features));
     })
@@ -50,6 +51,18 @@ export function fetchEarthQuakeData(url, {
       console.log(error);
       throw new Error('Something went wrong, while trying to fetch the flight route data.');
     });
+}
+
+/**
+ * Filters a given set of earthquake data by a dateTime.
+ * @param {moment} dateTime
+ * @param {Immutable.List} data
+ * @returns {Immutable.List}
+ */
+export function filterEarthQuakeData(dateTime, data) {
+  const d = dateTime.clone().subtract('days', 3);
+  const f = data.toJS().filter(r => moment(r[4]).isSameOrAfter(d) && moment(r[4]).isSameOrBefore(dateTime));
+  return fromJS(f);
 }
 
 /**
@@ -66,7 +79,6 @@ export function fetchEarthQuakeData(url, {
  *   project: Function - get screen position [x, y] from geo coordinates [lng, lat]
  *   unproject: Function - get geo coordinates [lng, lat] from screen position [x, y]
  * }}
-
  */
 export function redrawEarthquakes(selector, data, { onClick }, { width, height, project, unproject }) {
   const svg = d3Select(`${selector} svg`);
@@ -81,7 +93,6 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
 
   // the current data plot is empty so we clear the svg and reattach the data
   if (!data.equals(currentData)) {
-    console.log('Reattach data');
     // remove all old data from the svg
     svg.selectAll('g').remove();
 
@@ -125,10 +136,8 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
     transitionBig(dataPlot.selectAll('circle'));
   }
 
-  console.log('Update data');
-
   // select all circles
-  const circles = dataPlot.selectAll('circle')
+  dataPlot.selectAll('circle')
     .attr('r', d => d[2])
     .attr('cx', d => project([d[0], d[1]])[0])
     .attr('cy', d => project([d[0], d[1]])[1])

@@ -1,0 +1,29 @@
+.osw-datetime-slider {
+  width: 800px;
+  background: rgba(57, 57, 57, 0.9);
+  height: 100%;
+  display: inline-block;
+  pointer-events: all;
+  cursor: pointer; }
+  .osw-datetime-slider .axis {
+    fill: gray;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none; }
+    .osw-datetime-slider .axis .tick text {
+      fill: gray; }
+    .osw-datetime-slider .axis .domain {
+      stroke: gray;
+      stroke-width: 4px;
+      stroke-linecap: round; }
+  .osw-datetime-slider .slider .selection {
+    fill: white;
+    fill-opacity: 1;
+    cursor: pointer;
+    stroke-width: 5px;
+    stroke-linecap: round;
+    stroke: white; }
+  .osw-datetime-slider .slider .tooltip text {
+    fill: white;
+    text-align: center;
+    font-size: 18px; }

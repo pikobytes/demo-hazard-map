@@ -1,0 +1,46 @@
+.osw-datetime-slider {
+  width: 800px;
+  background: rgba(57, 57, 57, 0.9);
+  height: 100%;
+  display: inline-block;
+  pointer-events: all;
+  cursor: pointer;
+
+  .axis {
+    fill: gray;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+
+    .tick {
+      text {
+        fill: gray;
+      }
+    }
+
+    .domain {
+      stroke: gray;
+      stroke-width: 4px;
+      stroke-linecap: round;
+    }
+  }
+
+  .slider {
+    .selection {
+      fill: white;
+      fill-opacity: 1;
+      cursor: pointer;
+      stroke-width: 5px;
+      stroke-linecap: round;
+      stroke: white;
+    }
+
+    .tooltip {
+      text {
+        fill: white;
+        text-align: center;
+        font-size: 18px;
+      }
+    }
+  }
+}
