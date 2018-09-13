@@ -41,4 +41,14 @@
     bottom: 30px;
     text-align: center;
   }
+
+  .report-container {
+    z-index: 100;
+    position: absolute;
+    width: 400px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.9);
+    top: 150px;
+    left: 20px;
+  }
 }

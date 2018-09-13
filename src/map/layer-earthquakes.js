@@ -1,57 +1,14 @@
-import axios from 'axios';
 import moment from 'moment';
 import { easeBounceIn, easeLinear } from 'd3-ease';
 import 'd3-transition';
 import { select as d3Select } from 'd3-selection';
 import { fromJS } from 'immutable';
-import isUndefined from 'lodash.isundefined';
 import partial from 'lodash.partial';
 
 /**
  * Current reference on the data
  */
 let currentData;
-
-/**
- * Fetches the data for the earth quakes.
- * @param {string} url
- * @param {{
- *   onSuccess: Function
- *   onLoadingStart: Function
- *   onLoadingEnd: Function
- * }}
- */
-export function fetchEarthQuakeData(url, {
-  onSuccess,
-  onLoadingStart,
-  onLoadingEnd,
-}) {
-  if (isUndefined(url) || url.length === 0) {
-    throw new TypeError('Missing flight route data url');
-  }
-
-  // fetch the data
-  onLoadingStart();
-  axios.get(url)
-    .then(({ status, data }) => {
-      if (status !== 200) {
-        onLoadingEnd();
-        throw new Error('Return unexpected response for flight route data');
-      }
-
-      // parse the data
-      const features = data.features.map(({ geometry, properties }) => {
-        const { coordinates } = geometry;
-        return [coordinates[0], coordinates[1], properties.mag, properties.title, properties.time];
-      });
-      onSuccess(fromJS(features));
-    })
-    .catch((error) => {
-      onLoadingEnd();
-      console.log(error);
-      throw new Error('Something went wrong, while trying to fetch the flight route data.');
-    });
-}
 
 /**
  * Filters a given set of earthquake data by a dateTime.

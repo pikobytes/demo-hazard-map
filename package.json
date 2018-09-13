@@ -55,6 +55,7 @@
     "detect-browser": "^2.0.0",
     "history": "^4.7.2",
     "immutable": "^3.8.2",
+    "lodash.has": "^4.5.2",
     "lodash.isnan": "^3.0.2",
     "lodash.partial": "^4.2.1",
     "lodash.uniqueid": "^4.0.1",

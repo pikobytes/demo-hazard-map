@@ -7,19 +7,108 @@ import partial from 'lodash.partial';
 import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
-import { List } from 'immutable';
+import { Map, List } from 'immutable';
 
 import './componentmap.css';
+import {
+  fetchAirplineData,
+  fetchAirportData,
+  fetchEarthQuakeData,
+  fetchRouteData,
+} from './api';
 import DateTimeSlider from './componentdatetimeslider';
 import SVGOverlay from './svg-overlay';
 import {
-  getAirportsAffectedByEarthquakes,
-} from './analysis'
-import { fetchAirportData } from './layer-airports';
-import { fetchEarthQuakeData, filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
+  createAirportDatabaseFromRoutes,
+  generateAirlinesConnectionReport,
+  processAirportsWithinEarthquakeRange,
+} from './analysis';
+import { renderAirportMarker } from './layer-airports';
+import { filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
 import Loading from '../loading/componentloading';
 
-export default class Map extends Component {
+const DATA_KEY = {
+  AIRLINES: 'airlines',
+  AIRPORTS: 'airports',
+  EARTHQUAKES: 'earthquakes',
+  FLIGHT_ROUTES: 'routes',
+};
+
+/**
+ * Fetches all data.
+ * @param {Function} onSuccess
+ */
+function fetchData(onSuccess) {
+  let count = 0;
+  function s() {
+    count += 1;
+    if (count === 4) onSuccess();
+  }
+  // fetch airline data
+  fetchAirplineData(
+    process.env.REACT_APP_DATA_AIRLINES,
+    {
+      onLoadingStart: bind(() => this.setState({ dataLoadingAL: true }), this),
+      onLoadingEnd: bind(() => this.setState({ dataLoadingAL: false }), this),
+      onSuccess: bind((d) => {
+        const { data } = this.state;
+        this.setState({
+          data: data.set(DATA_KEY.AIRLINES, d),
+          dataLoadingAL: false,
+        }, s);
+      }, this),
+    },
+  );
+
+  // fetch earth quake data
+  fetchEarthQuakeData(
+    process.env.REACT_APP_DATA_EARTHQUAKES,
+    {
+      onLoadingStart: bind(() => this.setState({ dataLoadingEQ: true }), this),
+      onLoadingEnd: bind(() => this.setState({ dataLoadingEQ: false }), this),
+      onSuccess: bind((d) => {
+        const { data, dataFiltered, dateTime } = this.state;
+        this.setState({
+          data: data.set(DATA_KEY.EARTHQUAKES, d),
+          dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, d)),
+          dataLoadingEQ: false,
+        }, s);
+      }, this),
+    },
+  );
+  // fetch airport data
+  fetchAirportData(
+    process.env.REACT_APP_DATA_AIRPORTS,
+    {
+      onLoadingStart: bind(() => this.setState({ dataLoadingAP: true }), this),
+      onLoadingEnd: bind(() => this.setState({ dataLoadingAP: false }), this),
+      onSuccess: bind((d) => {
+        const { data } = this.state;
+        this.setState({
+          data: data.set(DATA_KEY.AIRPORTS, d),
+          dataLoadingAP: false,
+        }, s);
+      }, this),
+    },
+  );
+  // fetch route data
+  fetchRouteData(
+    process.env.REACT_APP_DATA_FLIGHT_ROUTES,
+    {
+      onLoadingStart: bind(() => this.setState({ dataLoadingFR: true }), this),
+      onLoadingEnd: bind(() => this.setState({ dataLoadingFR: false }), this),
+      onSuccess: bind((d) => {
+        const { data } = this.state;
+        this.setState({
+          data: data.set(DATA_KEY.FLIGHT_ROUTES, d),
+          dataLoadingFR: false,
+        }, s);
+      }, this),
+    },
+  );
+}
+
+export default class MapContainer extends Component {
   static propTypes = {
     styleUrl: PropTypes.string.isRequired,
     token: PropTypes.string.isRequired,
@@ -28,14 +117,28 @@ export default class Map extends Component {
   constructor(props) {
     super(props);
 
+    const dateTime = moment();
     this.state = {
-      dataAirports: new List([]),
-      dataAirportsLoading: false,
-      dataEA: new List([]),
-      dataEAFiltered: new List([]),
-      dataEALoading: false,
-      dateTime: moment(),
-      dateTimeExtent: [moment().subtract('days', 30), moment()],
+      data: new Map({
+        [DATA_KEY.AIRLINES]: new List([]),
+        [DATA_KEY.AIRPORTS]: new List([]),
+        [DATA_KEY.EARTHQUAKES]: new List([]),
+        [DATA_KEY.FLIGHT_ROUTES]: new List([]),
+      }),
+      dataAirlines: new Map({}),
+      dataAirports: new Map({}),
+      dataFiltered: new Map({
+        [DATA_KEY.AIRLINES]: new List([]),
+        [DATA_KEY.AIRPORTS]: new List([]),
+        [DATA_KEY.EARTHQUAKES]: new List([]),
+        [DATA_KEY.FLIGHT_ROUTES]: new List([]),
+      }),
+      dataLoadingAL: false,
+      dataLoadingAP: false,
+      dataLoadingEQ: false,
+      dataLoadingFR: false,
+      dateTime: dateTime,
+      dateTimeExtent: [dateTime.clone().subtract(30, 'days'), dateTime],
       mapStyle: props.styleUrl,
       popup: undefined,
       token: props.token,
@@ -49,30 +152,43 @@ export default class Map extends Component {
     };
   }
 
+  updateAssetEvaluation() {
+    const { data, dataAirports, dataFiltered } = this.state;
+
+    console.log('Update asset evaluation ...');
+
+    // extract airports which are within the range of an earthquake
+    const airports = processAirportsWithinEarthquakeRange(
+      dataFiltered.get(DATA_KEY.EARTHQUAKES).toJS(),
+      data.get(DATA_KEY.AIRPORTS).toJS(),
+    );
+
+    // process the  airlines affected by the number of connections
+    const dataAirlines = generateAirlinesConnectionReport(
+      dataAirports,
+      airports,
+      data.get(DATA_KEY.AIRLINES),
+    );
+
+    this.setState({
+      dataAirlines: dataAirlines,
+      dataFiltered: dataFiltered.set(DATA_KEY.AIRPORTS, new List(airports)),
+    });
+  }
+
   componentDidMount() {
-    // fetch earth quake data
-    fetchEarthQuakeData(
-      process.env.REACT_APP_DATA_EARTHQUAKES,
-      {
-        onLoadingStart: bind(() => this.setState({ dataEALoading: true }), this),
-        onLoadingEnd: bind(() => this.setState({ dataEALoading: false }), this),
-        onSuccess: bind((d) => {
-          const { dateTime } = this.state;
-          this.setState({ dataEALoading: false, dataEA: d, dataEAFiltered: filterEarthQuakeData(dateTime, d) });
-        }, this),
-      },
-    );
-    // fetch airport data
-    fetchAirportData(
-      process.env.REACT_APP_DATA_AIRPORTS,
-      {
-        onLoadingStart: bind(() => this.setState({ dataAirportsLoading: true }), this),
-        onLoadingEnd: bind(() => this.setState({ dataAirportsLoading: false }), this),
-        onSuccess: bind((d) => {
-          this.setState({ dataAirportsLoading: false, dataAirports: d });
-        }, this),
-      },
-    );
+    // load the data
+    fetchData.call(this, bind(() => {
+      const { data, dataFiltered, dateTime } = this.state;
+
+      // create a airport database
+      if (data.get(DATA_KEY.FLIGHT_ROUTES).size > 0) {
+        this.setState({
+          dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, data.get(DATA_KEY.EARTHQUAKES))),
+          dataAirports: createAirportDatabaseFromRoutes(data.get(DATA_KEY.FLIGHT_ROUTES)),
+        }, this.updateAssetEvaluation.bind(this));
+      }
+    }, this));
   }
 
   /**
@@ -80,12 +196,12 @@ export default class Map extends Component {
    * @param {moment} dateTime
    */
   onDateTimeChange(dateTime) {
-    const { dataEA } = this.state;
+    const { data, dataFiltered } = this.state;
     // update state
     this.setState({
-      dataEAFiltered: filterEarthQuakeData(dateTime, dataEA),
+      dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, data.get(DATA_KEY.EARTHQUAKES))),
       dateTime: dateTime,
-    });
+    }, this.updateAssetEvaluation.bind(this));
   }
 
   /**
@@ -100,21 +216,29 @@ export default class Map extends Component {
    * Renders the component
    */
   render() {
-    const { dataEALoading, dataEAFiltered, dataAirports, dateTime, dateTimeExtent, mapStyle, popup, token } = this.state;
+    const {
+      dataFiltered,
+      dataLoadingAL,
+      dataLoadingAP,
+      dataLoadingEQ,
+      dataLoadingFR,
+      dateTime,
+      dateTimeExtent,
+      mapStyle,
+      popup,
+      token,
+    } = this.state;
     const viewport = {
       mapStyle,
       ...this.state.viewport,
       ...this.props,
     };
-
-    // perform analysis
-    // if (dataEA.size > 0 && dataAirports.size > 0) {
-    //   getAirportsAffectedByEarthquakes(dataEA.toJS(), dataAirports.toJS());
-    // }
+    const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS).toJS();
+    const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
 
     return <div className="osw-map">
       {
-        dataEALoading &&
+        (dataLoadingAL || dataLoadingEQ || dataLoadingAP || dataLoadingFR) &&
         <div className="loading-container">
           <Loading radius={50}/>
         </div>
@@ -134,13 +258,16 @@ export default class Map extends Component {
             partial(
               redrawEarthquakes,
               '.osw-map',
-              dataEAFiltered,
+              dataEarthquake,
               {
                 onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),
               },
             )
           }
           captureClick={true} />
+
+        { dataAirports.length > 0 && dataAirports.map(renderAirportMarker) }
+
 
         <div style={{ position: 'absolute', right: 10, top: 100 }}>
           <NavigationControl onViewportChange={this.onViewportChange.bind(this)} />
@@ -161,6 +288,9 @@ export default class Map extends Component {
           onDateTimeChange={this.onDateTimeChange.bind(this)}
           timeExtent={dateTimeExtent}
         />
+      </div>
+
+      <div className="report-container">
       </div>
     </div>;
   }

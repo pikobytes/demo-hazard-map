@@ -14,6 +14,9 @@ import { List } from 'immutable';
 
 import './componentdatetimeslider.css';
 
+// timeout for preventing to much dispatching of updateDateTimeChange
+let TIMEOUT_DATETIME_CHANGE;
+
 // format string for usage with momentjs
 const DATETIME_FORMAT = 'MMM DD';
 
@@ -108,7 +111,8 @@ export default class DateTimeSlider extends Component {
         // Check if the dateTime has update and if yes dispatch a change. The demo application
         // dispatches a new date when the day has changed.
         if (props.dateTime.format(DATETIME_FORMAT) !== newDateTimeStr) {
-          props.onDateTimeChange(newDateTime);
+          clearTimeout(TIMEOUT_DATETIME_CHANGE);
+          TIMEOUT_DATETIME_CHANGE = setTimeout(() => props.onDateTimeChange(newDateTime), 200);
         }
       }
     }
