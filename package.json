@@ -23,7 +23,7 @@
   "bugs": {
     "url": "https://github.com/pikobytes/harvester-monitor-client/issues"
   },
-  "homepage": "https://github.com/pikobytes/harvester-monitor-client#readme",
+  "homepage": "https://earthquake-demo.opensensorweb.de",
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "enzyme": "^3.3.0",
