@@ -332,7 +332,7 @@ export default class MapContainer extends Component {
       </InteractiveMap>
 
       <div className="datetime-slider-container">
-        <DateTimeSlider style={{ width: 800, height: 150 }}
+        <DateTimeSlider style={{ width: window.innerWidth > 1200 ? 800 : 400, height: 150 }}
           dateTime={dateTime}
           onDateTimeChange={this.onDateTimeChange.bind(this)}
           timeExtent={dateTimeExtent}

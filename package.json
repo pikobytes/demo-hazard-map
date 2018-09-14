@@ -13,7 +13,9 @@
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "repository": {
     "type": "git",
@@ -23,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/pikobytes/harvester-monitor-client/issues"
   },
-  "homepage": "https://github.com/pikobytes/harvester-monitor-client#readme",
+  "homepage": "https://pikobytes.github.io/demo-hazard-map",
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "enzyme": "^3.3.0",
@@ -53,6 +55,7 @@
     "d3-transition": "^1.1.3",
     "deck.gl": "^6.1.0",
     "detect-browser": "^2.0.0",
+    "gh-pages": "^1.2.0",
     "history": "^4.7.2",
     "immutable": "^3.8.2",
     "ionicons": "^4.4.3",

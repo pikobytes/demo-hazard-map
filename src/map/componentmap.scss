@@ -37,6 +37,13 @@
     left: 20px;
   }
 
+  @media screen and (max-width: $break-point-lg) {
+    .report-container {
+      width: 300px;
+      height: 400px;
+    }
+  }
+
   .datasource-container {
     z-index: 100;
     position: absolute;
@@ -64,6 +71,12 @@
     }
     .record {
       margin-top: 5px;
+    }
+  }
+
+  @media screen and (max-width: $break-point-lg) {
+    .datasource-container {
+      display: none;
     }
   }
 }
