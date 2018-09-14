@@ -73,9 +73,10 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
       // transition back to normal
       selection.transition()
         .duration(200)
-        .attr('r', d => d[2])
+        .attr('r', 5)
         .attr('stroke-width', 2)
         .attr('stroke-dasharray', '1, 0')
+        .attr('fill-opacity', '.25')
         .ease(easeLinear)
         .on('end', partial(transitionBig, selection));
     }
@@ -84,7 +85,9 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
       selection.transition()
         .duration(2000)
         .attr('stroke-width', 3)
-        .attr('r', d => d[2] * 3)
+        .attr('r', d => 5 + ((Math.max(d[2], 5) - 4) * 5))
+        .attr('fill-opacity', d => `${Math.min(1, ((Math.max(d[2], 5) - 4) * 0.2) + 0.25)}`)
+        .attr('stroke-opacity', d => `.${Math.min(1, ((Math.max(d[2], 5) - 4) * 0.1) + 0.25)}`)
         .ease(easeLinear)
         .on('end', partial(transitionSmall, selection));
     }
@@ -95,7 +98,7 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
 
   // select all circles
   dataPlot.selectAll('circle')
-    .attr('r', d => d[2])
+    .attr('r', 5)
     .attr('cx', d => project([d[0], d[1]])[0])
     .attr('cy', d => project([d[0], d[1]])[1])
     .attr('fill', '#8a1c1c')
