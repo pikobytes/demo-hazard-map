@@ -8,6 +8,7 @@ import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { Map, List } from 'immutable';
+import jQuery from 'jquery';
 
 import './componentmap.css';
 import {
@@ -25,7 +26,7 @@ import {
 } from './analysis';
 import { renderAirportMarker } from './layer-airports';
 import { filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
-import Loading from '../loading/componentloading';
+import Report from './componentreport';
 
 const DATA_KEY = {
   AIRLINES: 'airlines',
@@ -70,7 +71,7 @@ function fetchData(onSuccess) {
         const { data, dataFiltered, dateTime } = this.state;
         this.setState({
           data: data.set(DATA_KEY.EARTHQUAKES, d),
-          dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, d)),
+          //dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, d)),
           dataLoadingEQ: false,
         }, s);
       }, this),
@@ -137,9 +138,13 @@ export default class MapContainer extends Component {
       dataLoadingAP: false,
       dataLoadingEQ: false,
       dataLoadingFR: false,
+      dataLoadingPR: false,
       dateTime: dateTime,
       dateTimeExtent: [dateTime.clone().subtract(30, 'days'), dateTime],
+      dataUpdate: undefined,
+      map: undefined, // @deprecated
       mapStyle: props.styleUrl,
+      passViewport: false, // @deprecated
       popup: undefined,
       token: props.token,
       viewport: {
@@ -173,10 +178,13 @@ export default class MapContainer extends Component {
     this.setState({
       dataAirlines: dataAirlines,
       dataFiltered: dataFiltered.set(DATA_KEY.AIRPORTS, new List(airports)),
+      dataLoadingPR: false,
     });
   }
 
   componentDidMount() {
+    const updateDate = moment();
+
     // load the data
     fetchData.call(this, bind(() => {
       const { data, dataFiltered, dateTime } = this.state;
@@ -186,6 +194,8 @@ export default class MapContainer extends Component {
         this.setState({
           dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, data.get(DATA_KEY.EARTHQUAKES))),
           dataAirports: createAirportDatabaseFromRoutes(data.get(DATA_KEY.FLIGHT_ROUTES)),
+          dataUpdate: updateDate,
+          dataLoadingPR: true,
         }, this.updateAssetEvaluation.bind(this));
       }
     }, this));
@@ -201,7 +211,46 @@ export default class MapContainer extends Component {
     this.setState({
       dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, data.get(DATA_KEY.EARTHQUAKES))),
       dateTime: dateTime,
+      dataLoadingPR: true,
     }, this.updateAssetEvaluation.bind(this));
+  }
+
+  /**
+   * Set the map state, when the onLoad event is finished.
+   */
+  onLoad({ target }) {
+    this.setState({ map: target, passViewport: true });
+    // Dirty hack. We simulate automatic a first map interaction to fix a problem
+    // within react-map-gl with initial creation of correct projection behavior.
+    // At start the given projection properties are wrong and leading to wrong placed
+    // data.
+    jQuery('.mapboxgl-ctrl-zoom-in').click();
+  }
+
+  /**
+   * Refreshes all dynamic data sources
+   */
+  onRefreshData() {
+    const updateDate = moment();
+
+    // fetch earth quake data
+    fetchEarthQuakeData(
+      process.env.REACT_APP_DATA_EARTHQUAKES,
+      {
+        onLoadingStart: bind(() => this.setState({ dataLoadingEQ: true }), this),
+        onLoadingEnd: bind(() => this.setState({ dataLoadingEQ: false }), this),
+        onSuccess: bind((d) => {
+          const { data, dataFiltered, dateTime } = this.state;
+          this.setState({
+            data: data.set(DATA_KEY.EARTHQUAKES, d),
+            dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, d)),
+            dataUpdate: updateDate,
+            dataLoadingEQ: false,
+            dataLoadingPR: true,
+          }, this.updateAssetEvaluation.bind(this));
+        }, this),
+      },
+    );
   }
 
   /**
@@ -209,7 +258,7 @@ export default class MapContainer extends Component {
    * @param viewport
    */
   onViewportChange(viewport) {
-    this.setState({ viewport });
+    this.setState({ viewport, passViewport: false });
   }
 
   /**
@@ -217,13 +266,17 @@ export default class MapContainer extends Component {
    */
   render() {
     const {
+      data,
+      dataAirlines,
       dataFiltered,
       dataLoadingAL,
       dataLoadingAP,
       dataLoadingEQ,
       dataLoadingFR,
+      dataLoadingPR,
       dateTime,
       dateTimeExtent,
+      dataUpdate,
       mapStyle,
       popup,
       token,
@@ -237,19 +290,15 @@ export default class MapContainer extends Component {
     const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
 
     return <div className="osw-map">
-      {
-        (dataLoadingAL || dataLoadingEQ || dataLoadingAP || dataLoadingFR) &&
-        <div className="loading-container">
-          <Loading radius={50}/>
-        </div>
-      }
       <InteractiveMap
         { ...viewport }
+        ref="mapContainer"
         mapboxApiAccessToken={token}
         maxPitch={85}
         width={window.innerWidth}
         height={window.innerHeight}
         onViewportChange={this.onViewportChange.bind(this)}
+        onLoad={this.onLoad.bind(this)}
         // setting to `true` should cause the map to flicker because all sources
         // and layers need to be reloaded without diffing enabled.
         preventStyleDiffing={ false }>
@@ -291,7 +340,26 @@ export default class MapContainer extends Component {
       </div>
 
       <div className="report-container">
+        <Report airlines={dataAirlines}
+          dateTime={dateTime}
+          loading={(dataLoadingAL || dataLoadingEQ || dataLoadingAP || dataLoadingFR || dataLoadingPR)} />
       </div>
+
+      { !isUndefined(dataUpdate) &&
+      <div className="datasource-container">
+        <div className="header">
+          <div>Last Update: Today - {dataUpdate.format('HH:mm:ss')}</div>
+          <a className="button" onClick={this.onRefreshData.bind(this)}>
+            <span className="icon is-small">
+              <i className="ion ion-md-sync" />
+            </span>
+          </a>
+        </div>
+        <div className="record">Airlines (Records: {data.get(DATA_KEY.AIRLINES).size})</div>
+        <div className="record">Airports (Records: {data.get(DATA_KEY.AIRPORTS).size})</div>
+        <div className="record">Earthquakes > Mag. 5 (Records: {data.get(DATA_KEY.EARTHQUAKES).size})</div>
+        <div className="record">Fligth-Connections (Records: {data.get(DATA_KEY.FLIGHT_ROUTES).size})</div>
+      </div> }
     </div>;
   }
 }

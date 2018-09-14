@@ -9,21 +9,6 @@
   z-index: 1000;
   background: $lightGrey;
 
-  .loading-container {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    display: block;
-    z-index: 100;
-    top: 100px;
-    left: 20px;
-
-    .osw-loading-child {
-      border: .5rem solid $lightGrey;
-      border-top-color: black;
-    }
-  }
-
   .mapboxgl-popup {
     .mapboxgl-popup-tip {
       color: rgba(255, 255, 255, 0.9);
@@ -50,5 +35,35 @@
     background: rgba(255, 255, 255, 0.9);
     top: 150px;
     left: 20px;
+  }
+
+  .datasource-container {
+    z-index: 100;
+    position: absolute;
+    width: 300px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.9);
+    bottom: 150px;
+    left: 20px;
+    padding: 5px;
+    font-size: .9rem;
+    .header {
+      display: inline-block;
+      width:100%;
+      > div {
+        float: left;
+        display: inline-block;
+        height: 36px;
+        vertical-align: middle;
+        line-height: 36px;
+      }
+      > a {
+        float:right;
+        display: inline-block;
+      }
+    }
+    .record {
+      margin-top: 5px;
+    }
   }
 }
