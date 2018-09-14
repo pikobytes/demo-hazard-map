@@ -8,3 +8,4 @@ public/data/flight-routes.json
 public/data/flight-routes-dummy.csv
 public/data/flight-routes-dummy.json
 build/
+tmp/
