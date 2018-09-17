@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import bind from 'lodash.bind';
 import isUndefined from 'lodash.isundefined';
 import partial from 'lodash.partial';
+import round from 'lodash.round';
 import uniqueId from 'lodash.uniqueid';
 import { List } from 'immutable';
 
@@ -24,6 +25,7 @@ export default class DateTimeSlider extends Component {
   static propTypes = {
     dateTime: PropTypes.instanceOf(moment),
     onDateTimeChange: PropTypes.func,
+    style: PropTypes.object,
     timeExtent: PropTypes.arrayOf(
       PropTypes.instanceOf(moment),
     ),
@@ -33,6 +35,12 @@ export default class DateTimeSlider extends Component {
     super(props);
     this.state = {
       containerId: `datetime-slider-${uniqueId()}`,
+      d3Brush: undefined,
+      d3Handle: undefined,
+      d3Scale: undefined,
+      d3Svg: undefined,
+      height: props.style.height,
+      width: props.style.width - 60,
     };
   }
 
@@ -40,8 +48,8 @@ export default class DateTimeSlider extends Component {
     const { containerId } = this.state;
     const { style, dateTime, timeExtent } = this.props;
     const margin = { top: 10, right: 50, bottom: 10, left: 50 };
-    const width = style.width - margin.left - margin.right;
-    const height = style.height - margin.bottom - margin.top;
+    const width = this.state.width - margin.left - margin.right;
+    const height = this.state.height - margin.bottom - margin.top;
 
     // create the scale function
     const timeScale = d3ScaleTime()
@@ -116,6 +124,51 @@ export default class DateTimeSlider extends Component {
         }
       }
     }
+
+    // update the state
+    this.setState({ d3Brush: brush, d3Handle: handle, d3Scale: timeScale, d3Svg: svg });
+  }
+
+  onClick(direction) {
+    const { dateTime } = this.props;
+    const { d3Brush, d3Handle, d3Scale, d3Svg, width } = this.state;
+
+    // make sure the brush is already initialized
+    if (isUndefined(d3Brush) || isUndefined(d3Handle) || isUndefined(d3Scale) || isUndefined(d3Svg)) {
+      console.log('Brush is not initialized yet');
+    }
+
+    let newDate;
+    let selection;
+    if (direction === 'left') {
+      newDate = dateTime.clone().subtract('days', 1);
+      const newSelection = round(d3Scale(newDate.valueOf()));
+      selection = newSelection > 0 && newSelection < width
+        ? [newSelection - 1, newSelection]
+        : undefined;
+    } else if (direction === 'right') {
+      newDate = dateTime.clone().add('days', 1);
+      const newSelection = round(d3Scale(newDate.valueOf()));
+      selection = newSelection < width && newSelection > 0
+        ? [newSelection - 1, newSelection]
+        : undefined;
+    }
+
+    if (!isUndefined(selection) && !isUndefined(newDate)) {
+      // update the brush slider
+      d3Svg.select('.slider')
+        .call(d3Brush.move, selection);
+
+      // update the brush text feedback
+      const newDateTime = moment(d3Scale.invert(selection[0]));
+      const newDateTimeStr = newDateTime.format(DATETIME_FORMAT);
+      d3Handle.select('text')
+        .text(newDateTimeStr)
+        .attr('transform', `translate(${selection[1] - 28},${-25})`);
+
+      // dispatch the new dateTime
+      this.props.onDateTimeChange(newDateTime);
+    }
   }
 
   /**
@@ -132,6 +185,18 @@ export default class DateTimeSlider extends Component {
   render() {
     const { containerId } = this.state;
     const { style } = this.props;
-    return <div className="osw-datetime-slider" style={style} id={containerId} />;
+    return <div className="osw-datetime-slider" style={style}>
+      <div className="child-container container-left">
+        <span className="icon is-medium" onClick={this.onClick.bind(this, 'left')}>
+          <i className="ion-md-arrow-dropleft" />
+        </span>
+      </div>
+      <div className="child-container container-middle" id={containerId}/>
+      <div className="child-container container-right">
+        <span className="icon is-medium" onClick={this.onClick.bind(this, 'right')}>
+          <i className="ion ion-md-arrow-dropright" />
+        </span>
+      </div>
+    </div>;
   }
 }
