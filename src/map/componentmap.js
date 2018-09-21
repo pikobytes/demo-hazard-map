@@ -8,8 +8,7 @@ import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { Map, List } from 'immutable';
-import jQuery from 'jquery';
-
+import WebMercatorViewport from 'viewport-mercator-project';
 import './componentmap.css';
 import {
   fetchAirplineData,
@@ -154,6 +153,7 @@ export default class MapContainer extends Component {
         bearing: 0,
         pitch: 0,
       },
+      viewportPure: undefined,
     };
   }
 
@@ -220,11 +220,9 @@ export default class MapContainer extends Component {
    */
   onLoad({ target }) {
     this.setState({ map: target, passViewport: true });
-    // Dirty hack. We simulate automatic a first map interaction to fix a problem
-    // within react-map-gl with initial creation of correct projection behavior.
-    // At start the given projection properties are wrong and leading to wrong placed
-    // data.
-    jQuery('.mapboxgl-ctrl-zoom-in').click();
+    target.on('moveend', this.onViewportUpdate.bind(this));
+    target.on('load', this.onViewportUpdate.bind(this));
+    this.onViewportUpdate({ target });
   }
 
   /**
@@ -253,6 +251,21 @@ export default class MapContainer extends Component {
     );
   }
 
+  onViewportUpdate({ target }) {
+    this.setState({
+      viewportPure: new WebMercatorViewport({
+        altitude: 1.5,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        longitude: target.getCenter().lng,
+        latitude: target.getCenter().lat,
+        zoom: target.getZoom(),
+        pitch: target.getPitch(),
+        bearing: target.getBearing(),
+      }),
+    });
+  }
+
   /**
    * Function for updating the viewport
    * @param viewport
@@ -277,9 +290,11 @@ export default class MapContainer extends Component {
       dateTime,
       dateTimeExtent,
       dataUpdate,
+      map,
       mapStyle,
       popup,
       token,
+      viewportPure,
     } = this.state;
     const viewport = {
       mapStyle,
@@ -311,11 +326,12 @@ export default class MapContainer extends Component {
               {
                 onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),
               },
+              viewportPure,
             )
           }
           captureClick={true} />
 
-        { dataAirports.length > 0 && dataAirports.map(renderAirportMarker) }
+        { (dataAirports.length > 0 && viewportPure !== undefined) && dataAirports.map(partial(renderAirportMarker, viewportPure)) }
 
 
         <div style={{ position: 'absolute', right: 10, top: 100 }}>

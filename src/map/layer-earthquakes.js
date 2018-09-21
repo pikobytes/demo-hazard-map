@@ -4,6 +4,7 @@ import 'd3-transition';
 import { select as d3Select } from 'd3-selection';
 import { fromJS } from 'immutable';
 import partial from 'lodash.partial';
+import WebMercatorViewport from 'viewport-mercator-project';
 
 /**
  * Current reference on the data
@@ -37,9 +38,26 @@ export function filterEarthQuakeData(dateTime, data) {
  *   unproject: Function - get geo coordinates [lng, lat] from screen position [x, y]
  * }}
  */
-export function redrawEarthquakes(selector, data, { onClick }, { width, height, project, unproject }) {
+export function redrawEarthquakes(selector, data, { onClick }, viewport, { width, height, project, unproject }) {
   const svg = d3Select(`${selector} svg`);
 
+  if (viewport === undefined) {
+    return;
+  }
+
+  // console.log(map.getCenter())
+  //
+  // const viewport = new WebMercatorViewport({
+  //     altitude: 1.5,
+  //     width: window.innerWidth,
+  //     height: window.innerHeight,
+  //     longitude: map.getCenter()[0],
+  //     latitude: map.getCenter()[1],
+  //     zoom: map.getZoom(),
+  //     pitch: map.getPitch(),
+  //     bearing: map.getBearing(),
+  //   });
+  // console.log(map.getCenter()[0])
   // in this case no svg is found and we abort the function. This is for example the
   // case when the layer is not currently initialized properly
   if (svg.node() === null) return;
@@ -99,8 +117,8 @@ export function redrawEarthquakes(selector, data, { onClick }, { width, height, 
   // select all circles
   dataPlot.selectAll('circle')
     .attr('r', 5)
-    .attr('cx', d => project([d[0], d[1]])[0])
-    .attr('cy', d => project([d[0], d[1]])[1])
+    .attr('cx', d => viewport.project([d[0], d[1]])[0])
+    .attr('cy', d => viewport.project([d[0], d[1]])[1])
     .attr('fill', '#8a1c1c')
     .attr('fill-opacity', '.25')
     .attr('stroke', '#8a1c1c')
