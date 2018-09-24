@@ -1,21 +1,21 @@
 import React, { Component } from 'react';
-import moment from 'moment';
 import mapboxgl from 'mapbox-gl';
-import { List } from 'immutable';
+import moment from 'moment';
+import { List, fromJS } from 'immutable';
 import PropTypes from 'prop-types';
-import bind from 'lodash.bind';
 import uniqueId from 'lodash.uniqueid';
+import { wrapInFeatureCollection } from './utils';
 
 /**
- * Wraps a given array of geojson features in a feature collection.
- * @param {[*]} arr
- * @returns {{type: string, features: *}}
+ * Filters a given set of earthquake data by a dateTime.
+ * @param {moment} dateTime
+ * @param {Immutable.List} data
+ * @returns {Immutable.List}
  */
-function wrapInFeatureCollection(arr) {
-  return {
-    type: 'FeatureCollection',
-    features: arr,
-  };
+export function filterEarthQuakeData(dateTime, data) {
+  const d = dateTime.clone().subtract('days', 3);
+  const f = data.toJS().filter(r => moment(r[4]).isSameOrAfter(d) && moment(r[4]).isSameOrBefore(dateTime));
+  return fromJS(f);
 }
 
 function opacityValue({ angle, minOpacity, maxOpacity }) {
@@ -44,6 +44,8 @@ function toFeatures(arr) {
         coordinates: [r[0], r[1]],
       },
       properties: {
+        name: r[3],
+        timestamp: r[4],
         magnitude: r[2],
         opacity: opacityValue({
           angle: angle,
@@ -69,6 +71,7 @@ let animation = null;
 export default class LayerEarthquakes extends Component {
   static propTypes = {
     data: PropTypes.instanceOf(List),
+    id: PropTypes.string.isRequired,
     map: PropTypes.instanceOf(mapboxgl.Map),
   }
 
@@ -76,7 +79,7 @@ export default class LayerEarthquakes extends Component {
     super(props);
 
     this.state = {
-      layerId: `earthquake-layer-${uniqueId()}`,
+      layerId: props.id,
       sourceId: `earthquake-source-${uniqueId()}`,
       animationFrame: `earthquake-animation-${uniqueId()}`,
     };

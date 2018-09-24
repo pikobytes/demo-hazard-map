@@ -3,12 +3,9 @@ import moment from 'moment';
 import PropTypes from 'prop-types';
 import bind from 'lodash.bind';
 import isUndefined from 'lodash.isundefined';
-import partial from 'lodash.partial';
 import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { FlyToInterpolator, InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { Map, List } from 'immutable';
-import WebMercatorViewport from 'viewport-mercator-project';
 import mapboxgl from 'mapbox-gl';
 import './componentmap.css';
 import {
@@ -19,16 +16,13 @@ import {
 } from './api';
 import DataRefresher from './componentdatarefresh';
 import DateTimeSlider from './componentdatetimeslider';
-import SVGOverlay from './svg-overlay';
 import {
   createAirportDatabaseFromRoutes,
   generateAirlinesConnectionReport,
   processAirportsWithinEarthquakeRange,
 } from './analysis';
-import { renderAirportMarker } from './layer-airports';
-import { filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
 import LayerAirports from './layerairports';
-import LayerEarthquakes from './layerearthquakes';
+import LayerEarthquakes, { filterEarthQuakeData } from './layerearthquakes';
 import Report from './componentreport';
 import Ticker from './componentticker';
 
@@ -156,20 +150,10 @@ export default class MapContainer extends Component {
       dateTime: dateTime,
       dateTimeExtent: [dateTime.clone().subtract(30, 'days'), dateTime],
       dataUpdate: undefined,
-      map: undefined, // @deprecated
+      map: undefined,
       mapContainer: `map-container-${uniqueId()}`,
-      mapStyle: props.styleUrl,
-      passViewport: false, // @deprecated
+      layerEarthquakeId: `earthquake-layer-${uniqueId()}`,
       popup: undefined,
-      token: props.token,
-      viewport: {
-        latitude: 5.088887490341627,
-        longitude: 13.651812424861578,
-        zoom: 1,
-        bearing: 0,
-        pitch: 0,
-      },
-      viewportPure: undefined,
     };
   }
 
@@ -218,7 +202,7 @@ export default class MapContainer extends Component {
 
     // initialize the map
     const { styleUrl, token } = this.props;
-    const { mapContainer } = this.state;
+    const { mapContainer, layerEarthquakeId } = this.state;
     const viewport = {
       latitude: 5.088887490341627,
       longitude: 13.651812424861578,
@@ -252,8 +236,11 @@ export default class MapContainer extends Component {
     // in case debug mode is active display a scalebar
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
 
-    // Update the map after initializing
+    // update the map after initializing
     map.once('load', bind(({ target }) => this.setState({ map: target }), this));
+
+    // bind click listener
+    map.on('click', layerEarthquakeId, this.onMapClickEarthquake.bind(this));
   }
 
   /**
@@ -270,14 +257,25 @@ export default class MapContainer extends Component {
     }, this.updateAssetEvaluation.bind(this));
   }
 
-  /**
-   * Set the map state, when the onLoad event is finished.
-   */
-  onLoad({ target }) {
-    this.setState({ map: target, passViewport: true });
-    target.on('moveend', this.onViewportUpdate.bind(this));
-    target.on('load', this.onViewportUpdate.bind(this));
-    this.onViewportUpdate({ target });
+  onMapClickEarthquake({ features, lngLat }) {
+    const { map } = this.state;
+    if (features.length > 0) {
+      const ft = features[0];
+      const coordinates = ft.geometry.coordinates.slice();
+      const description = `${moment(ft.properties.timestamp).format('MMM DD')}: ${ft.properties.name}`;
+
+      // Ensure that if the map is zoomed out such that multiple
+      // copies of the feature are visible, the popup appears
+      // over the copy being pointed to.
+      while (Math.abs(lngLat.lng - coordinates[0]) > 180) {
+        coordinates[0] += lngLat.lng > coordinates[0] ? 360 : -360;
+      }
+
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(description)
+        .addTo(map);
+    }
   }
 
   /**
@@ -306,33 +304,6 @@ export default class MapContainer extends Component {
     );
   }
 
-  onViewportUpdate({ target }) {
-    const { map } = this.state;
-    if (!isUndefined(map)) {
-      this.setState({ map: target });
-    }
-
-    // this.setState({
-    //   viewportPure: new WebMercatorViewport({
-    //     altitude: 1.5,
-    //     width: window.innerWidth,
-    //     height: window.innerHeight,
-    //     longitude: target.getCenter().lng,
-    //     latitude: target.getCenter().lat,
-    //     zoom: target.getZoom(),
-    //     pitch: target.getPitch(),
-    //     bearing: target.getBearing(),
-    //   }),
-    // });
-  }
-
-  /**
-   * Function for updating the viewport
-   * @param viewport
-   */
-  onViewportChange(viewport) {
-    this.setState({ viewport, passViewport: false });
-  }
 
   /**
    * Renders the component
@@ -352,10 +323,7 @@ export default class MapContainer extends Component {
       dataUpdate,
       map,
       mapContainer,
-      mapStyle,
-      popup,
-      token,
-      viewportPure,
+      layerEarthquakeId,
     } = this.state;
     const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS);
     const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
@@ -372,50 +340,9 @@ export default class MapContainer extends Component {
           height,
           visibility: 'visible',
         }}/>
-        { !isUndefined(map) && <LayerEarthquakes data={dataEarthquake} map={map} /> }
+        { !isUndefined(map) && <LayerEarthquakes id={layerEarthquakeId} data={dataEarthquake} map={map} /> }
         { !isUndefined(map) && <LayerAirports data={dataAirports} map={map} /> }
       </div>
-      {/*<InteractiveMap*/}
-        {/*{ ...{ mapStyle, ...this.state.viewport, ...this.props } }*/}
-        {/*ref="mapContainer"*/}
-        {/*mapboxApiAccessToken={token}*/}
-        {/*maxPitch={85}*/}
-        {/*width={window.innerWidth}*/}
-        {/*height={window.innerHeight}*/}
-        {/*onViewportChange={this.onViewportChange.bind(this)}*/}
-        {/*onLoad={this.onLoad.bind(this)}*/}
-        {/*// setting to `true` should cause the map to flicker because all sources*/}
-        {/*// and layers need to be reloaded without diffing enabled.*/}
-        {/*preventStyleDiffing={ false }>*/}
-        {/*<SVGOverlay*/}
-          {/*redraw={*/}
-            {/*partial(*/}
-              {/*redrawEarthquakes,*/}
-              {/*'.osw-map',*/}
-              {/*dataEarthquake,*/}
-              {/*{*/}
-                {/*onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),*/}
-              {/*},*/}
-              {/*viewportPure,*/}
-            {/*)*/}
-          {/*}*/}
-          {/*captureClick={true} />*/}
-
-        {/*{ (dataAirports.length > 0 && viewportPure !== undefined) && dataAirports.map(partial(renderAirportMarker, viewportPure)) }*/}
-
-
-        {/*<div style={{ position: 'absolute', right: 10, top: 100 }}>*/}
-          {/*<NavigationControl onViewportChange={this.onViewportChange.bind(this)} />*/}
-        {/*</div>*/}
-
-        {/*{*/}
-          {/*!isUndefined(popup) &&*/}
-          {/*<Popup latitude={popup.lat} longitude={popup.lon} closeButton={true} closeOnClick={false} anchor="top"*/}
-            {/*onClose={bind(() => this.setState({ popup: undefined }), this)}>*/}
-            {/*<div>{popup.date.format('MMM DD')}: {popup.text}</div>*/}
-          {/*</Popup>*/}
-        {/*}*/}
-      {/*</InteractiveMap>*/}
 
       <div className="datetime-slider-container">
         <DateTimeSlider style={{ width: window.innerWidth > 1200 ? 800 : 400, height: 150 }}
@@ -439,14 +366,9 @@ export default class MapContainer extends Component {
       </div>
 
       <div className="ticker-container">
-        <Ticker key={dataEarthquake.size} data={dataEarthquake} map={map} onViewportChange={bind((viewportUpdate) => {
-          this.setState({
-            viewport: Object.assign({
-              transitionInterpolator: new FlyToInterpolator(),
-              transitionDuration: 3000,
-            }, this.state.viewport, viewportUpdate),
-          });
-        }, this)}/>
+        <Ticker key={dataEarthquake.size} data={dataEarthquake} map={map} onViewportChange={({ lon, lat, zoom }) => {
+          map.flyTo({ center: [lon, lat], zoom: zoom });
+        }} />
       </div>
     </div>;
   }

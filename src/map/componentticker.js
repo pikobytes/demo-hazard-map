@@ -51,7 +51,7 @@ export default class Ticker extends Component {
     if (!record) console.warn('Could not parse data');
 
     if (this.props.onViewportChange) {
-      this.props.onViewportChange({ longitude: record[0], latitude: record[1], zoom: 9 });
+      this.props.onViewportChange({ lon: record[0], lat: record[1], zoom: 8 });
     }
   }
 

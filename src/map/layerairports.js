@@ -1,22 +1,11 @@
 import React, { Component } from 'react';
-import moment from 'moment';
 import mapboxgl from 'mapbox-gl';
 import { List } from 'immutable';
 import PropTypes from 'prop-types';
-import bind from 'lodash.bind';
 import uniqueId from 'lodash.uniqueid';
+import { wrapInFeatureCollection } from './utils';
 
-/**
- * Wraps a given array of geojson features in a feature collection.
- * @param {[*]} arr
- * @returns {{type: string, features: *}}
- */
-function wrapInFeatureCollection(arr) {
-  return {
-    type: 'FeatureCollection',
-    features: arr,
-  };
-}
+
 
 /**
  * Maps a given array of earthquake data to a geojson feature collection
@@ -84,7 +73,6 @@ export default class LayerAirports extends Component {
     }
 
     // update the data
-    console.log(data.toJS())
     const fts = wrapInFeatureCollection(
       toFeatures(data.toJS()),
     );
