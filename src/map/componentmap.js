@@ -16,6 +16,7 @@ import {
   fetchEarthQuakeData,
   fetchRouteData,
 } from './api';
+import DataRefresher from './componentdatarefresh';
 import DateTimeSlider from './componentdatetimeslider';
 import SVGOverlay from './svg-overlay';
 import {
@@ -34,6 +35,16 @@ const DATA_KEY = {
   EARTHQUAKES: 'earthquakes',
   FLIGHT_ROUTES: 'routes',
 };
+
+/**
+ * @param {Map} data
+ * @returns {string}
+ */
+function getDatasourceText(data) {
+  return `${data.get(DATA_KEY.AIRLINES).size} airlines, ${data.get(DATA_KEY.AIRPORTS).size} airports, ` +
+      `${data.get(DATA_KEY.EARTHQUAKES).size} significant earthquakes, ${data.get(DATA_KEY.FLIGHT_ROUTES).size} ` +
+      'flight connections.';
+}
 
 /**
  * Fetches all data.
@@ -357,21 +368,13 @@ export default class MapContainer extends Component {
           loading={(dataLoadingAL || dataLoadingEQ || dataLoadingAP || dataLoadingFR || dataLoadingPR)} />
       </div>
 
-      { !isUndefined(dataUpdate) &&
-      <div className="datasource-container">
-        <div className="header">
-          <div>Last Update: Today - {dataUpdate.format('HH:mm:ss')}</div>
-          <a className="button" onClick={this.onRefreshData.bind(this)}>
-            <span className="icon is-small">
-              <i className="ion ion-md-sync" />
-            </span>
-          </a>
-        </div>
-        <div className="record">Airlines (Records: {data.get(DATA_KEY.AIRLINES).size})</div>
-        <div className="record">Airports (Records: {data.get(DATA_KEY.AIRPORTS).size})</div>
-        <div className="record">Earthquakes > Mag. 5 (Records: {data.get(DATA_KEY.EARTHQUAKES).size})</div>
-        <div className="record">Fligth-Connections (Records: {data.get(DATA_KEY.FLIGHT_ROUTES).size})</div>
-      </div> }
+      <div className="data-refresher-container">
+        <DataRefresher lastUpdate={dataUpdate}
+          text={getDatasourceText(data)}
+          onRefresh={this.onRefreshData.bind(this)}
+        />
+      </div>
+
       <div className="ticker-container">
         <Ticker key={dataEarthquake.size} data={dataEarthquake} map={map} onViewportChange={bind((viewportUpdate) => {
           this.setState({

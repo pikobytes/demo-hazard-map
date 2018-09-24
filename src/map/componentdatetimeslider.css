@@ -10,20 +10,25 @@
     position: relative;
     float: left;
     height: 100%; }
-    .osw-datetime-slider .child-container > span {
-      height: 100%;
-      width: 100%;
-      font-size: 26px; }
-      .osw-datetime-slider .child-container > span:hover {
-        font-size: 36px; }
     .osw-datetime-slider .child-container i {
       color: white; }
     .osw-datetime-slider .child-container.container-left {
-      width: 30px; }
+      width: 60px; }
     .osw-datetime-slider .child-container.container-middle {
-      width: calc(100% - 60px); }
+      width: calc(100% - 120px); }
     .osw-datetime-slider .child-container.container-right {
-      width: 30px; }
+      width: 60px; }
+    .osw-datetime-slider .child-container .icon-container {
+      width: 30px;
+      display: inline-block;
+      float: left;
+      height: 100%; }
+      .osw-datetime-slider .child-container .icon-container > span {
+        height: 100%;
+        width: 100%;
+        font-size: 26px; }
+        .osw-datetime-slider .child-container .icon-container > span:hover {
+          font-size: 36px; }
   .osw-datetime-slider .axis {
     fill: gray;
     -webkit-user-select: none;

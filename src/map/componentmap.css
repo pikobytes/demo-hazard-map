@@ -27,7 +27,7 @@
     width: 400px;
     height: 600px;
     background: rgba(255, 255, 255, 0.9);
-    top: 150px;
+    top: 250px;
     left: 20px; }
   .osw-map .datasource-container {
     z-index: 100;
@@ -59,6 +59,13 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    background: rgba(255, 255, 255, 0.9); }
+  .osw-map .data-refresher-container {
+    width: 400px;
+    height: 110px;
+    position: absolute;
+    left: 20px;
+    top: 105px;
     background: rgba(255, 255, 255, 0.9); }
   @media screen and (max-width: 1200px) {
     .osw-map .report-container {

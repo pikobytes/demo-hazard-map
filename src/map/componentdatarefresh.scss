@@ -1,0 +1,32 @@
+.osw-data-refresher {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  font-size: .9rem;
+  .header {
+    display: inline-block;
+    width:100%;
+    height: 30px;
+    > div {
+      float: left;
+      display: inline-block;
+      height: 36px;
+      vertical-align: middle;
+      line-height: 36px;
+    }
+    > a {
+      float:right;
+      display: inline-block;
+    }
+  }
+  .body {
+    padding-top: 10px;
+    height: calc(100% - 40px);
+    width: 100%;
+    font-size: 12px;
+    .last-update {
+      float: right;
+      text-align: right;
+    }
+  }
+}

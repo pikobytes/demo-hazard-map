@@ -12,29 +12,36 @@
     float: left;
     height: 100%;
 
-    > span {
-      height: 100%;
-      width: 100%;
-      font-size: 26px;
-      &:hover {
-        font-size: 36px;
-      }
-    }
-
     i {
       color: white;
     }
 
     &.container-left {
-      width: 30px;
+      width: 60px;
     }
 
     &.container-middle {
-      width: calc(100% - 60px);
+      width: calc(100% - 120px);
     }
 
     &.container-right {
+      width: 60px;
+    }
+
+    .icon-container {
       width: 30px;
+      display: inline-block;
+      float: left;
+      height: 100%;
+
+      > span {
+        height: 100%;
+        width: 100%;
+        font-size: 26px;
+        &:hover {
+          font-size: 36px;
+        }
+      }
     }
   }
 

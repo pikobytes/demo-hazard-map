@@ -69,7 +69,7 @@ export function redrawEarthquakes(selector, data, { onClick }, viewport, { width
   // the current data plot is empty so we clear the svg and reattach the data
   if (!data.equals(currentData)) {
     // clear all old transitions
-    svg.selectAll('circle').interrupt();
+    svg.interrupt().selectAll('*').interrupt();
 
     // remove all old data from the svg
     svg.selectAll('g').remove();

@@ -19,7 +19,7 @@ import './componentdatetimeslider.css';
 let TIMEOUT_DATETIME_CHANGE;
 
 // format string for usage with momentjs
-const DATETIME_FORMAT = 'MMM DD';
+const DATETIME_FORMAT = 'MMM DD - hh a';
 
 export default class DateTimeSlider extends Component {
   static propTypes = {
@@ -39,15 +39,16 @@ export default class DateTimeSlider extends Component {
       d3Handle: undefined,
       d3Scale: undefined,
       d3Svg: undefined,
+      dateTime: props.dateTime,
       height: props.style.height,
-      width: props.style.width - 60,
+      width: props.style.width - 120,
     };
   }
 
   componentDidMount() {
-    const { containerId } = this.state;
-    const { style, dateTime, timeExtent } = this.props;
-    const margin = { top: 10, right: 50, bottom: 10, left: 50 };
+    const { containerId, dateTime } = this.state;
+    const { timeExtent } = this.props;
+    const margin = { top: 10, right: 70, bottom: 10, left: 70 };
     const width = this.state.width - margin.left - margin.right;
     const height = this.state.height - margin.bottom - margin.top;
 
@@ -64,7 +65,7 @@ export default class DateTimeSlider extends Component {
     // define the brush
     const brush = d3BrushX()
       .extent([[0, 0], [width, height / 2]])
-      .on('brush', partial(brushed, this.props));
+      .on('brush', bind(brushed, this, this.props));
 
     // create the brush svg
     const svg = d3Select(`#${containerId}`)
@@ -105,7 +106,7 @@ export default class DateTimeSlider extends Component {
 
     handle.append('text')
       .text(moment(timeScale.invert(startingValue)).format(DATETIME_FORMAT))
-      .attr('transform', `translate(${startingValue - 28},${-25})`);
+      .attr('transform', `translate(${startingValue - 58},${-25})`);
 
     function brushed(props) {
       if (d3Event.sourceEvent && d3Event.type === 'brush') {
@@ -114,13 +115,18 @@ export default class DateTimeSlider extends Component {
         const newDateTimeStr = newDateTime.format(DATETIME_FORMAT);
         handle.select('text')
           .text(newDateTimeStr)
-          .attr('transform', `translate(${d3Event.selection[1] - 28},${-25})`);
+          .attr('transform', `translate(${d3Event.selection[1] - 58},${-25})`);
 
         // Check if the dateTime has update and if yes dispatch a change. The demo application
         // dispatches a new date when the day has changed.
         if (props.dateTime.format(DATETIME_FORMAT) !== newDateTimeStr) {
           clearTimeout(TIMEOUT_DATETIME_CHANGE);
-          TIMEOUT_DATETIME_CHANGE = setTimeout(() => props.onDateTimeChange(newDateTime), 200);
+          TIMEOUT_DATETIME_CHANGE = setTimeout(
+            bind(() => {
+              this.setState({ dateTime: newDateTime }, () => props.onDateTimeChange(newDateTime));
+            }, this),
+            200,
+          );
         }
       }
     }
@@ -130,8 +136,7 @@ export default class DateTimeSlider extends Component {
   }
 
   onClick(direction) {
-    const { dateTime } = this.props;
-    const { d3Brush, d3Handle, d3Scale, d3Svg, width } = this.state;
+    const { d3Brush, d3Handle, d3Scale, d3Svg, dateTime, width } = this.state;
 
     // make sure the brush is already initialized
     if (isUndefined(d3Brush) || isUndefined(d3Handle) || isUndefined(d3Scale) || isUndefined(d3Svg)) {
@@ -140,17 +145,29 @@ export default class DateTimeSlider extends Component {
 
     let newDate;
     let selection;
-    if (direction === 'left') {
+    if (direction === 'left-day') {
       newDate = dateTime.clone().subtract('days', 1);
       const newSelection = round(d3Scale(newDate.valueOf()));
       selection = newSelection > 0 && newSelection < width
-        ? [newSelection - 1, newSelection]
+        ? [newSelection - 0.005, newSelection]
         : undefined;
-    } else if (direction === 'right') {
+    } else if (direction === 'left-hour') {
+      newDate = dateTime.clone().subtract('hours', 1);
+      const newSelection = round(d3Scale(newDate.valueOf()), 2);
+      selection = newSelection > 0 && newSelection < width
+        ? [newSelection - 0.005, newSelection]
+        : undefined;
+    } else if (direction === 'right-day') {
       newDate = dateTime.clone().add('days', 1);
       const newSelection = round(d3Scale(newDate.valueOf()));
       selection = newSelection < width && newSelection > 0
-        ? [newSelection - 1, newSelection]
+        ? [newSelection - 0.005, newSelection]
+        : undefined;
+    } else if (direction === 'right-hour') {
+      newDate = dateTime.clone().add('hours', 1);
+      const newSelection = round(d3Scale(newDate.valueOf()));
+      selection = newSelection < width && newSelection > 0
+        ? [newSelection - 0.005, newSelection]
         : undefined;
     }
 
@@ -160,14 +177,15 @@ export default class DateTimeSlider extends Component {
         .call(d3Brush.move, selection);
 
       // update the brush text feedback
-      const newDateTime = moment(d3Scale.invert(selection[0]));
-      const newDateTimeStr = newDateTime.format(DATETIME_FORMAT);
+      const newDateTimeStr = newDate.format(DATETIME_FORMAT);
       d3Handle.select('text')
         .text(newDateTimeStr)
-        .attr('transform', `translate(${selection[1] - 28},${-25})`);
+        .attr('transform', `translate(${selection[1] - 58},${-25})`);
 
       // dispatch the new dateTime
-      this.props.onDateTimeChange(newDateTime);
+      this.setState({
+        dateTime: newDate,
+      }, () => this.props.onDateTimeChange(newDate));
     }
   }
 
@@ -187,15 +205,29 @@ export default class DateTimeSlider extends Component {
     const { style } = this.props;
     return <div className="osw-datetime-slider" style={style}>
       <div className="child-container container-left">
-        <span className="icon is-medium" onClick={this.onClick.bind(this, 'left')}>
-          <i className="ion-md-arrow-dropleft" />
-        </span>
+        <div className="icon-container">
+          <span className="icon is-medium" onClick={this.onClick.bind(this, 'left-day')}>
+            <i className="ion ion-md-rewind" />
+          </span>
+        </div>
+        <div className="icon-container">
+          <span className="icon is-medium" onClick={this.onClick.bind(this, 'left-hour')}>
+            <i className="ion-md-arrow-dropleft" />
+          </span>
+        </div>
       </div>
       <div className="child-container container-middle" id={containerId}/>
       <div className="child-container container-right">
-        <span className="icon is-medium" onClick={this.onClick.bind(this, 'right')}>
-          <i className="ion ion-md-arrow-dropright" />
-        </span>
+        <div className="icon-container">
+          <span className="icon is-medium" onClick={this.onClick.bind(this, 'right-hour')}>
+            <i className="ion ion-md-arrow-dropright" />
+          </span>
+        </div>
+        <div className="icon-container">
+          <span className="icon is-medium" onClick={this.onClick.bind(this, 'right-day')}>
+            <i className="ion ion-md-fastforward" />
+          </span>
+        </div>
       </div>
     </div>;
   }
