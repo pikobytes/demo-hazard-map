@@ -366,7 +366,7 @@ export default class MapContainer extends Component {
       </div>
 
       <div className="ticker-container">
-        <Ticker key={dataEarthquake.size} data={dataEarthquake} map={map} onViewportChange={({ lon, lat, zoom }) => {
+        <Ticker key={dataEarthquake.size} data={dataEarthquake} speed={3} onViewportChange={({ lon, lat, zoom }) => {
           map.flyTo({ center: [lon, lat], zoom: zoom });
         }} />
       </div>

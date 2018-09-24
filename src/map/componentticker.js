@@ -11,7 +11,11 @@ let TIMEOUT;
  * Ticker
  */
 export default class Ticker extends Component {
+  static defaultProps = {
+    speed: 5,
+  }
   static propTypes = {
+    speed: PropTypes.number,
     data: PropTypes.instanceOf(List),
     onViewportChange: PropTypes.func,
   }
@@ -31,12 +35,12 @@ export default class Ticker extends Component {
     clearTimeout(TIMEOUT);
 
     const { index } = this.state;
-    const { data } = this.props;
+    const { data, speed } = this.props;
     const newIndex = index + 1 < data.size
       ? index + 1
       : 0;
     this.setState({ index: newIndex }, bind(() => {
-      TIMEOUT = setTimeout(this.updateTicker.bind(this), 1000 * 5);
+      TIMEOUT = setTimeout(this.updateTicker.bind(this), 1000 * speed);
     }, this));
   }
 
