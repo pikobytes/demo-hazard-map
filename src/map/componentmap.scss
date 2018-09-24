@@ -23,7 +23,7 @@
     height: 150px;
     z-index: 100;
     position: absolute;
-    bottom: 30px;
+    bottom: 100px;
     text-align: center;
   }
 
@@ -35,13 +35,6 @@
     background: rgba(255, 255, 255, 0.9);
     top: 150px;
     left: 20px;
-  }
-
-  @media screen and (max-width: $break-point-lg) {
-    .report-container {
-      width: 300px;
-      height: 400px;
-    }
   }
 
   .datasource-container {
@@ -74,8 +67,26 @@
     }
   }
 
+
+
+  .ticker-container {
+    width: 100%;
+    height: 30px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
   @media screen and (max-width: $break-point-lg) {
+    .report-container {
+      width: 300px;
+      height: 400px;
+    }
     .datasource-container {
+      display: none;
+    }
+    .ticker-container {
       display: none;
     }
   }

@@ -6,7 +6,7 @@ import isUndefined from 'lodash.isundefined';
 import partial from 'lodash.partial';
 import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
+import { FlyToInterpolator, InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { Map, List } from 'immutable';
 import WebMercatorViewport from 'viewport-mercator-project';
 import './componentmap.css';
@@ -26,6 +26,7 @@ import {
 import { renderAirportMarker } from './layer-airports';
 import { filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
 import Report from './componentreport';
+import Ticker from './componentticker';
 
 const DATA_KEY = {
   AIRLINES: 'airlines',
@@ -296,17 +297,12 @@ export default class MapContainer extends Component {
       token,
       viewportPure,
     } = this.state;
-    const viewport = {
-      mapStyle,
-      ...this.state.viewport,
-      ...this.props,
-    };
     const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS).toJS();
     const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
 
     return <div className="osw-map">
       <InteractiveMap
-        { ...viewport }
+        { ...{ mapStyle, ...this.state.viewport, ...this.props } }
         ref="mapContainer"
         mapboxApiAccessToken={token}
         maxPitch={85}
@@ -376,6 +372,16 @@ export default class MapContainer extends Component {
         <div className="record">Earthquakes > Mag. 5 (Records: {data.get(DATA_KEY.EARTHQUAKES).size})</div>
         <div className="record">Fligth-Connections (Records: {data.get(DATA_KEY.FLIGHT_ROUTES).size})</div>
       </div> }
+      <div className="ticker-container">
+        <Ticker key={dataEarthquake.size} data={dataEarthquake} map={map} onViewportChange={bind((viewportUpdate) => {
+          this.setState({
+            viewport: Object.assign({
+              transitionInterpolator: new FlyToInterpolator(),
+              transitionDuration: 3000,
+            }, this.state.viewport, viewportUpdate),
+          });
+        }, this)}/>
+      </div>
     </div>;
   }
 }

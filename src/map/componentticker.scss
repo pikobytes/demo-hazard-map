@@ -1,0 +1,14 @@
+.osw-ticker {
+  padding: 5px 250px 5px 250px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  .ticker-info {
+    display: inline-block;
+    cursor: pointer;
+
+    &:hover {
+      font-weight: 600;
+    }
+  }
+}

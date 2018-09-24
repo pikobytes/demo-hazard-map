@@ -30,7 +30,7 @@ export function createAirportDatabaseFromRoutes(routes) {
     o[airportId][airlineId] += 1;
   }
 
-  console.log('Start generation of airport/routes database ...');
+  //console.log('Start generation of airport/routes database ...');
   const obj = {};
   routes.toJS().forEach((route) => {
     add(obj, route[1], route[0]);
@@ -49,7 +49,7 @@ export function processAirportsWithinEarthquakeRange(eq, ap) {
   // generate the relevent earthquake areas
   const eqAreas = eq.map((r) => {
     const radiusKm = 10 ** ((r[2] / 2.76) - 0.55);
-    console.log(`Maginute: ${r[2]} - Radius: ${radiusKm}`);
+    //console.log(`Maginute: ${r[2]} - Radius: ${radiusKm}`);
     return circle(point([r[0], r[1]]), 200, { units: 'kilometers' });
   });
 
