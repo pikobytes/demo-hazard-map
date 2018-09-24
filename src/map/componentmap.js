@@ -9,6 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { FlyToInterpolator, InteractiveMap, NavigationControl, Popup } from 'react-map-gl';
 import { Map, List } from 'immutable';
 import WebMercatorViewport from 'viewport-mercator-project';
+import mapboxgl from 'mapbox-gl';
 import './componentmap.css';
 import {
   fetchAirplineData,
@@ -26,6 +27,8 @@ import {
 } from './analysis';
 import { renderAirportMarker } from './layer-airports';
 import { filterEarthQuakeData, redrawEarthquakes } from './layer-earthquakes';
+import LayerAirports from './layerairports';
+import LayerEarthquakes from './layerearthquakes';
 import Report from './componentreport';
 import Ticker from './componentticker';
 
@@ -154,6 +157,7 @@ export default class MapContainer extends Component {
       dateTimeExtent: [dateTime.clone().subtract(30, 'days'), dateTime],
       dataUpdate: undefined,
       map: undefined, // @deprecated
+      mapContainer: `map-container-${uniqueId()}`,
       mapStyle: props.styleUrl,
       passViewport: false, // @deprecated
       popup: undefined,
@@ -172,7 +176,7 @@ export default class MapContainer extends Component {
   updateAssetEvaluation() {
     const { data, dataAirports, dataFiltered } = this.state;
 
-    console.log('Update asset evaluation ...');
+    //console.log('Update asset evaluation ...');
 
     // extract airports which are within the range of an earthquake
     const airports = processAirportsWithinEarthquakeRange(
@@ -211,6 +215,45 @@ export default class MapContainer extends Component {
         }, this.updateAssetEvaluation.bind(this));
       }
     }, this));
+
+    // initialize the map
+    const { styleUrl, token } = this.props;
+    const { mapContainer } = this.state;
+    const viewport = {
+      latitude: 5.088887490341627,
+      longitude: 13.651812424861578,
+      zoom: 1,
+      bearing: 0,
+      pitch: 0,
+    };
+
+    // set the mapbox access token
+    mapboxgl.accessToken = token;
+
+    const map = new mapboxgl.Map({
+      minZoom: 0,
+      maxZoom: 18,
+      center: [viewport.longitude, viewport.latitude],
+      container: mapContainer,
+      style: styleUrl,
+      zoom: viewport.zoom,
+    });
+
+    // bind listener for dispatching map interactions to the global application state
+    // map.on('moveend', bind(this.updateViewport, this));
+    // map.on('load', bind(this.updateViewport, this));
+
+    // deactivate zooming on double clickCluster
+    map.doubleClickZoom.disable();
+
+    // Add zoom, rotation and copy to clipboard control to the map.
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // in case debug mode is active display a scalebar
+    map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
+
+    // Update the map after initializing
+    map.once('load', bind(({ target }) => this.setState({ map: target }), this));
   }
 
   /**
@@ -264,18 +307,23 @@ export default class MapContainer extends Component {
   }
 
   onViewportUpdate({ target }) {
-    this.setState({
-      viewportPure: new WebMercatorViewport({
-        altitude: 1.5,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        longitude: target.getCenter().lng,
-        latitude: target.getCenter().lat,
-        zoom: target.getZoom(),
-        pitch: target.getPitch(),
-        bearing: target.getBearing(),
-      }),
-    });
+    const { map } = this.state;
+    if (!isUndefined(map)) {
+      this.setState({ map: target });
+    }
+
+    // this.setState({
+    //   viewportPure: new WebMercatorViewport({
+    //     altitude: 1.5,
+    //     width: window.innerWidth,
+    //     height: window.innerHeight,
+    //     longitude: target.getCenter().lng,
+    //     latitude: target.getCenter().lat,
+    //     zoom: target.getZoom(),
+    //     pitch: target.getPitch(),
+    //     bearing: target.getBearing(),
+    //   }),
+    // });
   }
 
   /**
@@ -303,56 +351,71 @@ export default class MapContainer extends Component {
       dateTimeExtent,
       dataUpdate,
       map,
+      mapContainer,
       mapStyle,
       popup,
       token,
       viewportPure,
     } = this.state;
-    const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS).toJS();
+    const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS);
     const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
-
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     return <div className="osw-map">
-      <InteractiveMap
-        { ...{ mapStyle, ...this.state.viewport, ...this.props } }
-        ref="mapContainer"
-        mapboxApiAccessToken={token}
-        maxPitch={85}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onViewportChange={this.onViewportChange.bind(this)}
-        onLoad={this.onLoad.bind(this)}
-        // setting to `true` should cause the map to flicker because all sources
-        // and layers need to be reloaded without diffing enabled.
-        preventStyleDiffing={ false }>
-        <SVGOverlay
-          redraw={
-            partial(
-              redrawEarthquakes,
-              '.osw-map',
-              dataEarthquake,
-              {
-                onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),
-              },
-              viewportPure,
-            )
-          }
-          captureClick={true} />
+      <div className="map-container" style={{
+        width: width,
+        height: height,
+        position: 'relativ',
+      }}>
+        <div id={mapContainer} key="map-mapbox" className="mapboxgl-map" style={{
+          width,
+          height,
+          visibility: 'visible',
+        }}/>
+        { !isUndefined(map) && <LayerEarthquakes data={dataEarthquake} map={map} /> }
+        { !isUndefined(map) && <LayerAirports data={dataAirports} map={map} /> }
+      </div>
+      {/*<InteractiveMap*/}
+        {/*{ ...{ mapStyle, ...this.state.viewport, ...this.props } }*/}
+        {/*ref="mapContainer"*/}
+        {/*mapboxApiAccessToken={token}*/}
+        {/*maxPitch={85}*/}
+        {/*width={window.innerWidth}*/}
+        {/*height={window.innerHeight}*/}
+        {/*onViewportChange={this.onViewportChange.bind(this)}*/}
+        {/*onLoad={this.onLoad.bind(this)}*/}
+        {/*// setting to `true` should cause the map to flicker because all sources*/}
+        {/*// and layers need to be reloaded without diffing enabled.*/}
+        {/*preventStyleDiffing={ false }>*/}
+        {/*<SVGOverlay*/}
+          {/*redraw={*/}
+            {/*partial(*/}
+              {/*redrawEarthquakes,*/}
+              {/*'.osw-map',*/}
+              {/*dataEarthquake,*/}
+              {/*{*/}
+                {/*onClick: bind(d => this.setState({ popup: { lat: d[1], lon: d[0], text: d[3], date: moment(d[4]) } }), this),*/}
+              {/*},*/}
+              {/*viewportPure,*/}
+            {/*)*/}
+          {/*}*/}
+          {/*captureClick={true} />*/}
 
-        { (dataAirports.length > 0 && viewportPure !== undefined) && dataAirports.map(partial(renderAirportMarker, viewportPure)) }
+        {/*{ (dataAirports.length > 0 && viewportPure !== undefined) && dataAirports.map(partial(renderAirportMarker, viewportPure)) }*/}
 
 
-        <div style={{ position: 'absolute', right: 10, top: 100 }}>
-          <NavigationControl onViewportChange={this.onViewportChange.bind(this)} />
-        </div>
+        {/*<div style={{ position: 'absolute', right: 10, top: 100 }}>*/}
+          {/*<NavigationControl onViewportChange={this.onViewportChange.bind(this)} />*/}
+        {/*</div>*/}
 
-        {
-          !isUndefined(popup) &&
-          <Popup latitude={popup.lat} longitude={popup.lon} closeButton={true} closeOnClick={false} anchor="top"
-            onClose={bind(() => this.setState({ popup: undefined }), this)}>
-            <div>{popup.date.format('MMM DD')}: {popup.text}</div>
-          </Popup>
-        }
-      </InteractiveMap>
+        {/*{*/}
+          {/*!isUndefined(popup) &&*/}
+          {/*<Popup latitude={popup.lat} longitude={popup.lon} closeButton={true} closeOnClick={false} anchor="top"*/}
+            {/*onClose={bind(() => this.setState({ popup: undefined }), this)}>*/}
+            {/*<div>{popup.date.format('MMM DD')}: {popup.text}</div>*/}
+          {/*</Popup>*/}
+        {/*}*/}
+      {/*</InteractiveMap>*/}
 
       <div className="datetime-slider-container">
         <DateTimeSlider style={{ width: window.innerWidth > 1200 ? 800 : 400, height: 150 }}
