@@ -76,7 +76,7 @@ function fetchData(onSuccess) {
       onLoadingStart: bind(() => this.setState({ dataLoadingEQ: true }), this),
       onLoadingEnd: bind(() => this.setState({ dataLoadingEQ: false }), this),
       onSuccess: bind((d) => {
-        const { data, dataFiltered, dateTime } = this.state;
+        const { data } = this.state;
         this.setState({
           data: data.set(DATA_KEY.EARTHQUAKES, d),
           //dataFiltered: dataFiltered.set(DATA_KEY.EARTHQUAKES, filterEarthQuakeData(dateTime, d)),

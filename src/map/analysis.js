@@ -1,6 +1,6 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign,no-unused-vars */
 import { Map } from 'immutable';
-import { circle, point, buffer, booleanPointInPolygon, booleanContains } from '@turf/turf';
+import { circle, point, booleanContains } from '@turf/turf';
 import has from 'lodash.has';
 
 /**
@@ -49,8 +49,9 @@ export function processAirportsWithinEarthquakeRange(eq, ap) {
   // generate the relevent earthquake areas
   const eqAreas = eq.map((r) => {
     const radiusKm = 10 ** ((r[2] / 2.76) - 0.55);
+    //console.log(radiusKm)
     //console.log(`Maginute: ${r[2]} - Radius: ${radiusKm}`);
-    return circle(point([r[0], r[1]]), 200, { units: 'kilometers' });
+    return circle(point([r[0], r[1]]), radiusKm, { units: 'kilometers' });
   });
 
   // check which airports are within the given polygons

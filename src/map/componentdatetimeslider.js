@@ -2,16 +2,13 @@ import React, { Component } from 'react';
 import { axisBottom as d3AxisBottom } from 'd3-axis';
 import { brushX as d3BrushX } from 'd3-brush';
 import { scaleTime as d3ScaleTime } from 'd3-scale';
-import { event as d3Event, mouse as d3Mouse, select as d3Select } from 'd3-selection';
+import { event as d3Event, select as d3Select } from 'd3-selection';
 import moment from 'moment';
-import axios from 'axios';
 import PropTypes from 'prop-types';
 import bind from 'lodash.bind';
 import isUndefined from 'lodash.isundefined';
-import partial from 'lodash.partial';
 import round from 'lodash.round';
 import uniqueId from 'lodash.uniqueid';
-import { List } from 'immutable';
 
 import './componentdatetimeslider.css';
 

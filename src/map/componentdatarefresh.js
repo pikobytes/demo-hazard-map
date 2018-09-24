@@ -1,11 +1,7 @@
 import React, { Component } from 'react';
 import moment from 'moment';
-import { List } from 'immutable';
 import PropTypes from 'prop-types';
-import bind from 'lodash.bind';
 import './componentdatarefresh.css';
-
-let TIMEOUT;
 
 /**
  * Component for updating the data within a given time interval

@@ -118,8 +118,8 @@ export default class LayerEarthquakes extends Component {
     );
   }
 
-  updateLayer({ map, data }) {
-    const { animationFrame, layerId, sourceId } = this.state;
+  updateLayer({ map }) {
+    const { layerId, sourceId } = this.state;
 
     if (map.getLayer(layerId) === undefined) {
       map.addSource(sourceId, {

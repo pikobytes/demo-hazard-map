@@ -47,7 +47,7 @@ export default class LayerAirports extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.data.equals(prevProps.data)) {
+    if (!this.props.data.equals(prevProps.data)) {
       this.updateLayer(this.props);
     }
   }
