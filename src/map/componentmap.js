@@ -241,6 +241,29 @@ export default class MapContainer extends Component {
 
     // bind click listener
     map.on('click', layerEarthquakeId, this.onMapClickEarthquake.bind(this));
+
+    // add event listeners for resize
+    window.addEventListener('resize', this.resize.bind(this));
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.resize.bind(this));
+  }
+
+  /**
+   * Is triggered when the application resizes
+   */
+  resize() {
+    const { map } = this.state;
+
+    if (isUndefined(map)) {
+      throw new Error('Map object is not initialized');
+    }
+
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }, () => map.resize());
   }
 
   /**
