@@ -25,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/pikobytes/harvester-monitor-client/issues"
   },
-  "homepage": "https://pikobytes.github.io/demo-hazard-map",
+  "homepage": "https://pikobytes.github.io/demo-hazard-map/",
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "enzyme": "^3.3.0",
