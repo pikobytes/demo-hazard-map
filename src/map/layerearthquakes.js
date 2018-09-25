@@ -118,7 +118,7 @@ export default class LayerEarthquakes extends Component {
       animation = window.requestAnimationFrame(
         this.animatePoints.bind(this),
       );
-    }, this), 50);
+    }, this), 100);
   }
 
   updateLayer({ map }) {
