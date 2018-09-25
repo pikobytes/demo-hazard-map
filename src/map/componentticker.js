@@ -5,57 +5,18 @@ import PropTypes from 'prop-types';
 import bind from 'lodash.bind';
 import './componentticker.css';
 
-let TIMEOUT;
-
 /**
  * Ticker
  */
 export default class Ticker extends Component {
-  static defaultProps = {
-    speed: 5,
-  }
   static propTypes = {
-    speed: PropTypes.number,
     data: PropTypes.instanceOf(List),
     onViewportChange: PropTypes.func,
   }
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      index: 0,
-    };
-  }
-
-  componentDidMount() {
-    this.updateTicker();
-  }
-
-  updateTicker() {
-    clearTimeout(TIMEOUT);
-
-    const { index } = this.state;
-    const { data, speed } = this.props;
-    const newIndex = index + 1 < data.size
-      ? index + 1
-      : 0;
-    this.setState({ index: newIndex }, bind(() => {
-      TIMEOUT = setTimeout(this.updateTicker.bind(this), 1000 * speed);
-    }, this));
-  }
-
-  onClick() {
-    const { index } = this.state;
-    const data = this.props.data.toJS();
-    const record = index < data.length
-      ? data[index]
-      : undefined;
-
-    // abort the action
-    if (!record) console.warn('Could not parse data');
-
+  onClick(lon, lat) {
     if (this.props.onViewportChange) {
-      this.props.onViewportChange({ lon: record[0], lat: record[1], zoom: 8 });
+      this.props.onViewportChange({ lon: lon, lat: lat, zoom: 8 });
     }
   }
 
@@ -64,11 +25,21 @@ export default class Ticker extends Component {
    */
   render() {
     const data = this.props.data.toJS();
-    const { index } = this.state;
+    const duration = `${data.length * 5}s`;
     return <div className="osw-ticker">
-      { data.length > 0 && <div className="ticker-info" onClick={this.onClick.bind(this)}>
-        {`${data[index][3]}   @   ${moment(data[index][4]).format('MMM DD - hh:mm:ss')}`}
-      </div>}
+      <div className="ticker-wrap">
+        <div className="ticker" style={{
+          animationDuration: duration,
+          WebkitAnimationDuration: duration,
+        }}>{
+            data.map(bind((record, index) => {
+              return <div className="ticker__item" key={index} onClick={this.onClick.bind(this, record[0], record[1])}>
+                {`${record[3]}   @   ${moment(record[4]).format('MMM DD - hh:mm:ss')}`}
+              </div>;
+            }, this))}
+        </div>
+      </div>
     </div>;
   }
 }
+
