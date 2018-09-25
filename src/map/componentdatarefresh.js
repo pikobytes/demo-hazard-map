@@ -32,9 +32,15 @@ export default class DataRefresher extends Component {
   }
 
   tick() {
+    const { lastUpdate } = this.props;
+    const newDate = new Date();
     this.setState({
-      time: new Date().toLocaleString(),
+      time: newDate.toLocaleString(),
     });
+
+    if (moment.duration(moment(newDate).diff(lastUpdate)).asMinutes() >= 1) {
+      this.props.onRefresh();
+    }
   }
 
   /**
