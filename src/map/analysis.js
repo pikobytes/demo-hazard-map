@@ -49,8 +49,6 @@ export function processAirportsWithinEarthquakeRange(eq, ap) {
   // generate the relevent earthquake areas
   const eqAreas = eq.map((r) => {
     const radiusKm = 10 ** ((r[2] / 2.76) - 0.55);
-    //console.log(radiusKm)
-    //console.log(`Maginute: ${r[2]} - Radius: ${radiusKm}`);
     return circle(point([r[0], r[1]]), radiusKm, { units: 'kilometers' });
   });
 

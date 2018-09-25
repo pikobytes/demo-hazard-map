@@ -64,11 +64,16 @@ export default class LayerAirports extends Component {
       map.addLayer({
         id: layerId,
         source: sourceId,
-        type: 'circle',
-        paint: {
-          'circle-radius': 5,
-          'circle-color': '#d00',
+        type: 'symbol',
+        layout: {
+          'icon-image': 'plane',
+          'icon-size': 0.05,
         },
+      });
+
+      map.loadImage('./images/md-airplane.png', (error, image) => {
+        if (error) throw error;
+        map.addImage('plane', image);
       });
     }
 
