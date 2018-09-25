@@ -7,6 +7,7 @@ import uniqueId from 'lodash.uniqueid';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Map, List } from 'immutable';
 import mapboxgl from 'mapbox-gl';
+import MobileDetect from 'mobile-detect';
 import './componentmap.css';
 import {
   fetchAirplineData,
@@ -32,6 +33,20 @@ const DATA_KEY = {
   EARTHQUAKES: 'earthquakes',
   FLIGHT_ROUTES: 'routes',
 };
+
+/**
+ * Detect if we are on a mobile phone or tablet
+ * @type {MobileDetect}
+ */
+const MOBILE_DETECT = new MobileDetect(window.navigator.userAgent);
+
+/**
+ * Checks if the application device is a desktop
+ * @returns {boolean}
+ */
+function isDesktop() {
+  return MOBILE_DETECT.mobile() === null && MOBILE_DETECT.phone() === null && MOBILE_DETECT.tablet() === null;
+}
 
 /**
  * @param {Map} data
@@ -370,13 +385,14 @@ export default class MapContainer extends Component {
         { !isUndefined(map) && <LayerAirports data={dataAirports} map={map} /> }
       </div>
 
-      <div className="datetime-slider-container">
-        <DateTimeSlider style={{ width: window.innerWidth > 1200 ? 800 : 400, height: 150 }}
-          dateTime={dateTime}
-          onDateTimeChange={this.onDateTimeChange.bind(this)}
-          timeExtent={dateTimeExtent}
-        />
-      </div>
+      { isDesktop() &&
+        <div className="datetime-slider-container">
+          <DateTimeSlider style={{ width: window.innerWidth > 1200 ? 800 : 400, height: 150 }}
+            dateTime={dateTime}
+            onDateTimeChange={this.onDateTimeChange.bind(this)}
+            timeExtent={dateTimeExtent}
+          />
+        </div> }
 
       <div className="report-container">
         <Report airlines={dataAirlines}
