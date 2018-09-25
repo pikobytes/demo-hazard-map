@@ -154,6 +154,8 @@ export default class MapContainer extends Component {
       mapContainer: `map-container-${uniqueId()}`,
       layerEarthquakeId: `earthquake-layer-${uniqueId()}`,
       popup: undefined,
+      width: window.innerWidth,
+      height: window.innerHeight,
     };
   }
 
@@ -347,11 +349,12 @@ export default class MapContainer extends Component {
       map,
       mapContainer,
       layerEarthquakeId,
+      width,
+      height,
     } = this.state;
     const dataAirports = dataFiltered.get(DATA_KEY.AIRPORTS);
     const dataEarthquake = dataFiltered.get(DATA_KEY.EARTHQUAKES);
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+
     return <div className="osw-map">
       <div className="map-container" style={{
         width: width,
@@ -388,11 +391,12 @@ export default class MapContainer extends Component {
         />
       </div>
 
+      { width >= 1200 &&
       <div className="ticker-container">
         <Ticker key={dataEarthquake.size} data={dataEarthquake} speed={3} onViewportChange={({ lon, lat, zoom }) => {
           map.flyTo({ center: [lon, lat], zoom: zoom });
         }} />
-      </div>
+      </div> }
     </div>;
   }
 }
