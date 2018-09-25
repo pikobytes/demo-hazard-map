@@ -62,7 +62,8 @@ export default class DateTimeSlider extends Component {
     // define the brush
     const brush = d3BrushX()
       .extent([[0, 0], [width, height / 2]])
-      .on('brush', bind(brushed, this, this.props));
+      .on('brush', bind(brushed, this, this.props))
+      .on('end', bind(brushed, this, this.props))
 
     // create the brush svg
     const svg = d3Select(`#${containerId}`)
@@ -106,7 +107,8 @@ export default class DateTimeSlider extends Component {
       .attr('transform', `translate(${startingValue - 58},${-25})`);
 
     function brushed(props) {
-      if (d3Event.sourceEvent && d3Event.type === 'brush') {
+      const type = d3Event.type;
+      if (d3Event.sourceEvent && (type === 'brush' || type === 'end')) {
         const translateX = d3Event.selection[1];
         const newDateTime = moment(timeScale.invert(translateX));
         const newDateTimeStr = newDateTime.format(DATETIME_FORMAT);
@@ -120,7 +122,9 @@ export default class DateTimeSlider extends Component {
           clearTimeout(TIMEOUT_DATETIME_CHANGE);
           TIMEOUT_DATETIME_CHANGE = setTimeout(
             bind(() => {
-              this.setState({ dateTime: newDateTime }, () => props.onDateTimeChange(newDateTime));
+              this.setState({ dateTime: newDateTime }, () => {
+                if (type === 'end') props.onDateTimeChange(newDateTime);
+              });
             }, this),
             200,
           );

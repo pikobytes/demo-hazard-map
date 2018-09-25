@@ -89,6 +89,8 @@ export default class LayerEarthquakes extends Component {
   }
 
   componentDidMount() {
+    this.updateLayer(this.props);
+
     animation = window.requestAnimationFrame(
       this.animatePoints.bind(this),
     );
@@ -96,12 +98,6 @@ export default class LayerEarthquakes extends Component {
 
   componentWillUnmount() {
     window.cancelAnimationFrame(animation);
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.data.equals(prevProps.data)) {
-      this.updateLayer(this.props);
-    }
   }
 
   animatePoints() {
