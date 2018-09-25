@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import moment from 'moment';
 import { List, fromJS } from 'immutable';
 import PropTypes from 'prop-types';
+import bind from 'lodash.bind';
 import uniqueId from 'lodash.uniqueid';
 import { wrapInFeatureCollection } from './utils';
 
@@ -113,9 +114,11 @@ export default class LayerEarthquakes extends Component {
     );
     map.getSource(sourceId).setData(fts);
 
-    animation = window.requestAnimationFrame(
-      this.animatePoints.bind(this),
-    );
+    setTimeout(bind(() => {
+      animation = window.requestAnimationFrame(
+        this.animatePoints.bind(this),
+      );
+    }, this), 50);
   }
 
   updateLayer({ map }) {
