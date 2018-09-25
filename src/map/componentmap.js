@@ -39,7 +39,7 @@ const DATA_KEY = {
  */
 function getDatasourceText(data) {
   return `${data.get(DATA_KEY.AIRLINES).size} airlines, ${data.get(DATA_KEY.AIRPORTS).size} airports, ` +
-      `${data.get(DATA_KEY.EARTHQUAKES).size} significant earthquakes, ${data.get(DATA_KEY.FLIGHT_ROUTES).size} ` +
+      `${data.get(DATA_KEY.EARTHQUAKES).size} earthquakes >= 4.5 magnitude, ${data.get(DATA_KEY.FLIGHT_ROUTES).size} ` +
       'flight connections.';
 }
 
