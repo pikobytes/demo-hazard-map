@@ -12,3 +12,6 @@ npm run deploy
 ### Developer
 
 The repository is based on the [create-react-app](https://github.com/facebook/create-react-app) build system.
+
+### Public demo
+https://pikobytes.github.io/demo-hazard-map/#/map
